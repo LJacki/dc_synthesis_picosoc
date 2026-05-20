@@ -59,6 +59,13 @@ if { [file exists "$SCR_DIR/picosoc.sdc"] } {
 } else {
     puts "  WARNING: picosoc.sdc not found"
 }
+
+# Read SDC constraints
+if { [file exists $SCR_DIR/picosoc.sdc] } {
+    puts 
+
+puts "  Clock $CLK_PORT: period=$CLK_PERIOD ns, uncertainty=$CLK_UNCERTAINTY ns"
+
 puts ""
 puts "========== IO constraints =========="
 
@@ -78,7 +85,7 @@ puts "  Done"
 
 puts ""
 puts "========== Compile =========="
-compile -gate_clock
+compile_ultra -gate_clock
 puts "  Done"
 
 puts ""
