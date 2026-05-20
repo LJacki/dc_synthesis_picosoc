@@ -9,7 +9,7 @@ set PROJ_DIR  "/home/xiaoai/Desktop/disk1/IC_Project/dc_synthesis_advanced"
 set RTL_DIR   "$PROJ_DIR/00_rtl"
 set LIB_DIR   "$PROJ_DIR/01_lib"
 set SCR_DIR   "$PROJ_DIR/02_scripts"
-set OUTPUT    "$PROJ_DIR/03_output_100m"
+set OUTPUT    "$PROJ_DIR/03_output"
 set REPORTS   "$OUTPUT/reports"
 set NETLIST   "$OUTPUT/netlist"
 set LOGS      "$PROJ_DIR/04_logs"
@@ -26,7 +26,7 @@ set CLK_PORT    "clk"
 set RST_PORT    "resetn"
 
 # === 时序约束（ns）===
-set CLK_PERIOD       10.0
+set CLK_PERIOD       20.0
 set CLK_UNCERTAINTY   0.5
 set CLK_TRANSITION    0.2
 set INPUT_DELAY       5.0
