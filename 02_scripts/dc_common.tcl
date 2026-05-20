@@ -26,7 +26,7 @@ set CLK_PORT    "clk"
 set RST_PORT    "resetn"
 
 # === 时序约束（ns）===
-set CLK_PERIOD       20.0
+set CLK_PERIOD       6.67
 set CLK_UNCERTAINTY   0.5
 set CLK_TRANSITION    0.2
 set INPUT_DELAY       5.0
