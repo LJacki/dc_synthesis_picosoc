@@ -1,0 +1,33 @@
+Warning: Design 'picosoc' has '1' unresolved references. For more detailed information, use the "link" command. (UID-341)
+ 
+****************************************
+Report : area
+Design : picosoc
+Version: O-2018.06-SP5
+Date   : Wed May 20 22:23:24 2026
+****************************************
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /home/xiaoai/Desktop/disk1/IC_Project/dc_synthesis_advanced/01_lib/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                         4936
+Number of nets:                         23889
+Number of cells:                        19905
+Number of combinational cells:           9266
+Number of sequential cells:              9571
+Number of macros/black boxes:               0
+Number of buf/inv:                       1290
+Number of references:                      23
+
+Combinational area:              10999.632199
+Buf/Inv area:                      981.273977
+Noncombinational area:           42761.626617
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (Wire load has zero net area)
+
+Total cell area:                 53761.258816
+Total area:                 undefined
+
+Information: This design contains black box (unknown) components. (RPT-8)
+1

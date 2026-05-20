@@ -1,0 +1,215 @@
+Information: Building the design 'picorv32' instantiated from design 'picosoc' with
+	the parameters "STACKADDR=32'h00000400,PROGADDR_RESET=32'h00100000,PROGADDR_IRQ=32'h00000000,BARREL_SHIFTER=1'h1,COMPRESSED_ISA=1'h1,ENABLE_COUNTERS=1'h1,ENABLE_MUL=1'h1,ENABLE_DIV=1'h1,ENABLE_FAST_MUL=1'h0,ENABLE_IRQ=1,ENABLE_IRQ_QREGS=1'h0". (HDL-193)
+Warning: Cannot find the design 'picorv32' in the library 'WORK'. (LBR-1)
+Warning: Unable to resolve reference 'picorv32' in 'picosoc'. (LINK-5)
+Warning: Design 'picosoc' has '1' unresolved references. For more detailed information, use the "link" command. (UID-341)
+Information: Updating design information... (UID-85)
+Warning: Design 'picosoc' contains 2 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
+Warning: There are infeasible paths detected in your design that were ignored during optimization. Please run 'report_timing -attributes' and/or 'create_qor_snapshot/query_qor_snapshot -infeasible_paths' to identify these paths.  (OPT-1721)
+ 
+****************************************
+Report : timing
+        -path full
+        -delay max
+        -max_paths 5
+Design : picosoc
+Version: O-2018.06-SP5
+Date   : Wed May 20 22:23:24 2026
+****************************************
+
+ # A fanout number of 1000 was used for high fanout net computations.
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+  Startpoint: spimemio/xfer_io0_90_reg
+              (rising edge-triggered flip-flop clocked by sys_clk')
+  Endpoint: flash_io0_do
+            (output port clocked by sys_clk)
+  Path Group: sys_clk
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  picosoc            5K_hvratio_1_1        NangateOpenCellLibrary
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  clock sys_clk' (rise edge)                              5.00       5.00
+  clock network delay (ideal)                             0.00       5.00
+  spimemio/xfer_io0_90_reg/CK (DFF_X1)                    0.00       5.00 r
+  spimemio/xfer_io0_90_reg/Q (DFF_X1)                     0.10       5.10 f
+  spimemio/U81/ZN (AOI222_X1)                             0.10       5.20 r
+  spimemio/U80/ZN (INV_X1)                                0.02       5.22 f
+  spimemio/flash_io0_do (spimemio)                        0.00       5.22 f
+  flash_io0_do (out)                                      0.00       5.22 f
+  data arrival time                                                  5.22
+
+  clock sys_clk (rise edge)                              10.00      10.00
+  clock network delay (ideal)                             0.00      10.00
+  clock uncertainty                                      -0.50       9.50
+  output external delay                                  -5.00       4.50
+  data required time                                                 4.50
+  --------------------------------------------------------------------------
+  data required time                                                 4.50
+  data arrival time                                                 -5.22
+  --------------------------------------------------------------------------
+  slack (VIOLATED)                                                  -0.72
+
+
+  Startpoint: spimemio/xfer_io1_90_reg
+              (rising edge-triggered flip-flop clocked by sys_clk')
+  Endpoint: flash_io1_do
+            (output port clocked by sys_clk)
+  Path Group: sys_clk
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  picosoc            5K_hvratio_1_1        NangateOpenCellLibrary
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  clock sys_clk' (rise edge)                              5.00       5.00
+  clock network delay (ideal)                             0.00       5.00
+  spimemio/xfer_io1_90_reg/CK (DFF_X1)                    0.00       5.00 r
+  spimemio/xfer_io1_90_reg/Q (DFF_X1)                     0.10       5.10 f
+  spimemio/U91/ZN (AOI222_X1)                             0.10       5.20 r
+  spimemio/U90/ZN (INV_X1)                                0.02       5.22 f
+  spimemio/flash_io1_do (spimemio)                        0.00       5.22 f
+  flash_io1_do (out)                                      0.00       5.22 f
+  data arrival time                                                  5.22
+
+  clock sys_clk (rise edge)                              10.00      10.00
+  clock network delay (ideal)                             0.00      10.00
+  clock uncertainty                                      -0.50       9.50
+  output external delay                                  -5.00       4.50
+  data required time                                                 4.50
+  --------------------------------------------------------------------------
+  data required time                                                 4.50
+  data arrival time                                                 -5.22
+  --------------------------------------------------------------------------
+  slack (VIOLATED)                                                  -0.72
+
+
+  Startpoint: spimemio/xfer_io2_90_reg
+              (rising edge-triggered flip-flop clocked by sys_clk')
+  Endpoint: flash_io2_do
+            (output port clocked by sys_clk)
+  Path Group: sys_clk
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  picosoc            5K_hvratio_1_1        NangateOpenCellLibrary
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  clock sys_clk' (rise edge)                              5.00       5.00
+  clock network delay (ideal)                             0.00       5.00
+  spimemio/xfer_io2_90_reg/CK (DFF_X1)                    0.00       5.00 r
+  spimemio/xfer_io2_90_reg/Q (DFF_X1)                     0.10       5.10 f
+  spimemio/U79/ZN (AOI222_X1)                             0.10       5.20 r
+  spimemio/U78/ZN (INV_X1)                                0.02       5.22 f
+  spimemio/flash_io2_do (spimemio)                        0.00       5.22 f
+  flash_io2_do (out)                                      0.00       5.22 f
+  data arrival time                                                  5.22
+
+  clock sys_clk (rise edge)                              10.00      10.00
+  clock network delay (ideal)                             0.00      10.00
+  clock uncertainty                                      -0.50       9.50
+  output external delay                                  -5.00       4.50
+  data required time                                                 4.50
+  --------------------------------------------------------------------------
+  data required time                                                 4.50
+  data arrival time                                                 -5.22
+  --------------------------------------------------------------------------
+  slack (VIOLATED)                                                  -0.72
+
+
+  Startpoint: spimemio/xfer_io3_90_reg
+              (rising edge-triggered flip-flop clocked by sys_clk')
+  Endpoint: flash_io3_do
+            (output port clocked by sys_clk)
+  Path Group: sys_clk
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  picosoc            5K_hvratio_1_1        NangateOpenCellLibrary
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  clock sys_clk' (rise edge)                              5.00       5.00
+  clock network delay (ideal)                             0.00       5.00
+  spimemio/xfer_io3_90_reg/CK (DFF_X1)                    0.00       5.00 r
+  spimemio/xfer_io3_90_reg/Q (DFF_X1)                     0.10       5.10 f
+  spimemio/U77/ZN (AOI222_X1)                             0.10       5.20 r
+  spimemio/U76/ZN (INV_X1)                                0.02       5.22 f
+  spimemio/flash_io3_do (spimemio)                        0.00       5.22 f
+  flash_io3_do (out)                                      0.00       5.22 f
+  data arrival time                                                  5.22
+
+  clock sys_clk (rise edge)                              10.00      10.00
+  clock network delay (ideal)                             0.00      10.00
+  clock uncertainty                                      -0.50       9.50
+  output external delay                                  -5.00       4.50
+  data required time                                                 4.50
+  --------------------------------------------------------------------------
+  data required time                                                 4.50
+  data arrival time                                                 -5.22
+  --------------------------------------------------------------------------
+  slack (VIOLATED)                                                  -0.72
+
+
+  Startpoint: iomem_ready
+              (input port clocked by sys_clk)
+  Endpoint: memory/clk_gate_mem_reg[128]_2/latch
+            (gating element for clock sys_clk)
+  Path Group: sys_clk
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  picosoc            5K_hvratio_1_1        NangateOpenCellLibrary
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  clock sys_clk (rise edge)                               0.00       0.00
+  clock network delay (ideal)                             0.00       0.00
+  input external delay                                    5.00       5.00 f
+  iomem_ready (in)                                        0.00       5.00 f
+  U270/ZN (NAND2_X1)                                      0.03       5.03 r
+  U248/ZN (INV_X1)                                        0.03       5.05 f
+  U229/Z (BUF_X1)                                         0.06       5.11 f
+  U246/ZN (NOR2_X1)                                       0.06       5.17 r
+  U269/ZN (NAND4_X1)                                      0.06       5.23 f
+  C228/ZN (OR2_X1)                                        0.06       5.29 f
+  U268/ZN (NOR3_X1)                                       0.06       5.35 r
+  U247/ZN (INV_X1)                                        0.04       5.39 f
+  U243/ZN (NOR2_X1)                                       0.04       5.43 r
+  memory/wen[0] (picosoc_mem)                             0.00       5.43 r
+  memory/U4/ZN (AND2_X1)                                  0.12       5.55 r
+  memory/U39/ZN (NAND2_X1)                                0.14       5.69 f
+  memory/U1329/ZN (NOR2_X1)                               0.07       5.75 r
+  memory/clk_gate_mem_reg[128]_2/EN (SNPS_CLOCK_GATE_HIGH_picosoc_mem_509)
+                                                          0.00       5.75 r
+  memory/clk_gate_mem_reg[128]_2/latch/E (CLKGATETST_X1)
+                                                          0.01       5.76 r
+  data arrival time                                                  5.76
+
+  clock sys_clk (rise edge)                              10.00      10.00
+  clock network delay (ideal)                             0.00      10.00
+  clock uncertainty                                      -0.50       9.50
+  memory/clk_gate_mem_reg[128]_2/latch/CK (CLKGATETST_X1)
+                                                          0.00       9.50 r
+  clock gating setup time                                -0.10       9.40
+  data required time                                                 9.40
+  --------------------------------------------------------------------------
+  data required time                                                 9.40
+  data arrival time                                                 -5.76
+  --------------------------------------------------------------------------
+  slack (MET)                                                        3.64
+
+
+1

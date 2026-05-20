@@ -1,0 +1,85 @@
+Warning: Design 'picosoc' has '1' unresolved references. For more detailed information, use the "link" command. (UID-341)
+Warning: There are infeasible paths detected in your design that were ignored during optimization. Please run 'report_timing -attributes' and/or 'create_qor_snapshot/query_qor_snapshot -infeasible_paths' to identify these paths.  (OPT-1721)
+ 
+****************************************
+Report : qor
+Design : picosoc
+Version: O-2018.06-SP5
+Date   : Wed May 20 22:23:24 2026
+****************************************
+
+
+  Timing Path Group 'sys_clk'
+  -----------------------------------
+  Levels of Logic:               2.00
+  Critical Path Length:          0.22
+  Critical Path Slack:          -0.72
+  Critical Path Clk Period:     10.00
+  Total Negative Slack:         -2.87
+  No. of Violating Paths:        4.00
+  Worst Hold Violation:         -0.41
+  Total Hold Violation:       -104.02
+  No. of Hold Violations:      316.00
+  -----------------------------------
+
+
+  Cell Count
+  -----------------------------------
+  Hierarchical Cell Count:       1054
+  Hierarchical Port Count:       4813
+  Leaf Cell Count:              18837
+  Buf/Inv Cell Count:            1290
+  Buf Cell Count:                1109
+  Inv Cell Count:                 181
+  CT Buf/Inv Cell Count:            1
+  Combinational Cell Count:      9267
+  Sequential Cell Count:         9570
+  Macro Count:                      0
+  -----------------------------------
+
+
+  Area
+  -----------------------------------
+  Combinational Area:    10999.632199
+  Noncombinational Area: 42761.626617
+  Buf/Inv Area:            981.273977
+  Total Buffer Area:           884.98
+  Total Inverter Area:          96.29
+  Macro/Black Box Area:      0.000000
+  Net Area:                  0.000000
+  -----------------------------------
+  Cell Area:             53761.258816
+  Design Area:           53761.258816
+
+
+  Design Rules
+  -----------------------------------
+  Total Number of Nets:         19157
+  Nets With Violations:             0
+  Max Trans Violations:             0
+  Max Cap Violations:               0
+  -----------------------------------
+
+
+  Hostname: IcDesign
+
+  Compile CPU Statistics
+  -----------------------------------------
+  Resource Sharing:                    5.15
+  Logic Optimization:                 13.24
+  Mapping Optimization:               10.65
+  -----------------------------------------
+  Overall Compile Time:               41.64
+  Overall Compile Wall Clock Time:   133.71
+
+  --------------------------------------------------------------------
+
+  Design  WNS: 0.72  TNS: 2.87  Number of Violating Paths: 4
+
+
+  Design (Hold)  WNS: 0.41  TNS: 104.02  Number of Violating Paths: 316
+
+  --------------------------------------------------------------------
+
+
+1
