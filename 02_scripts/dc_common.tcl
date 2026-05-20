@@ -51,3 +51,9 @@ puts "  CLK_UNCERTAINTY: $CLK_UNCERTAINTY ns"
 puts "  INPUT_DELAY    : $INPUT_DELAY ns"
 puts "  OUTPUT_DELAY   : $OUTPUT_DELAY ns"
 puts "=========================================="
+
+# === 额外时钟（若有） ===
+# set ADDITIONAL_CLOCKS [list]
+
+# === Async CDC 信号（需 set_false_path）===
+set ASYNC_IRQ_SIGNALS [list irq_5 irq_6 irq_7]

@@ -52,6 +52,18 @@ set_clock_uncertainty $CLK_UNCERTAINTY [get_clocks $CLK_PORT]
 set_clock_transition  $CLK_TRANSITION  [get_clocks $CLK_PORT]
 set_dont_touch_network [get_clocks $CLK_PORT]
 
+# Read SDC constraints
+if { [file exists "$SCR_DIR/picosoc.sdc"] } {
+    puts "  Reading SDC: $SCR_DIR/picosoc.sdc"
+    source $SCR_DIR/picosoc.sdc
+} else {
+    puts "  WARNING: picosoc.sdc not found"
+}
+
+# Read SDC constraints
+if { [file exists $SCR_DIR/picosoc.sdc] } {
+    puts 
+
 puts "  Clock $CLK_PORT: period=$CLK_PERIOD ns, uncertainty=$CLK_UNCERTAINTY ns"
 
 puts ""
