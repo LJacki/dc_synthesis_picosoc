@@ -1,0 +1,20 @@
+# IC Synthesis Artifacts
+*.v.bak
+*.log
+
+# Output
+03_output/
+04_logs/
+
+# Synthesized DB
+01_lib/*.db
+01_lib/*.lib
+
+# lc_shell cache
+alib-52/
+
+# Work directory
+work/
+
+# OS junk
+.DS_Store
