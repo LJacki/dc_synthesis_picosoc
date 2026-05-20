@@ -9,7 +9,7 @@ set_units -time ns -resistance kOhm -capacitance pF -voltage V -current mA
 ###################################################################
 # Clock Definition
 ###################################################################
-create_clock [get_ports clk] -name sys_clk -period 6.67 -waveform {0 3.33}
+create_clock [get_ports clk] -name sys_clk -period 20.0 -waveform {0 10}
 
 # Clock uncertainty (jitter + margin)
 set_clock_uncertainty 0.5 [get_clocks sys_clk]
