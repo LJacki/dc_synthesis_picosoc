@@ -62,8 +62,7 @@ if { [file exists "$SCR_DIR/picosoc.sdc"] } {
 puts ""
 puts "========== IO constraints =========="
 
-set_input_delay  $INPUT_DELAY -clock $CLK_PORT \
-    [remove_from_collection [all_inputs] [get_ports "$CLK_PORT $RST_PORT"]]
+set_input_delay  $INPUT_DELAY -clock $CLK_PORT     [remove_from_collection [all_inputs] [get_ports "$CLK_PORT $RST_PORT"]]
 set_output_delay $OUTPUT_DELAY -clock $CLK_PORT [all_outputs]
 
 set_false_path -from [get_ports $RST_PORT]
@@ -72,18 +71,19 @@ puts "  input_delay  = $INPUT_DELAY ns"
 puts "  output_delay = $OUTPUT_DELAY ns"
 
 puts ""
-puts "========== Fix hold violations =========="
-set_fix_hold [get_clocks $CLK_PORT]
+puts "========== Compile =========="
+compile_ultra -gate_clock
 puts "  Done"
 
 puts ""
-puts "========== Compile =========="
-compile -gate_clock
+puts "========== Fix hold violations (AFTER compile) =========="
+set_fix_hold [get_clocks $CLK_PORT]
 puts "  Done"
 
 puts ""
 puts "========== Reports =========="
 report_timing  -max_paths 5 > "$REPORTS/timing_mapped.rpt"
+report_timing  -max_paths 5 -delay min > "$REPORTS/hold_timing_mapped.rpt"
 report_area                     > "$REPORTS/area_mapped.rpt"
 report_cell                     > "$REPORTS/cell_usage_mapped.rpt"
 report_qor                      > "$REPORTS/qor_mapped.rpt"
