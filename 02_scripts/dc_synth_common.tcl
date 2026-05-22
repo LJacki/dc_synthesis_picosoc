@@ -4,12 +4,12 @@
 ###############################################################################
 
 set PROJ_DIR   /home/xiaoai/Desktop/disk1/IC_Project/dc_synthesis_advanced
-set RTL_DIR    /00_rtl
-set LIB_DIR    /01_lib
-set SCR_DIR    /02_scripts
-set LOGS       /04_logs
+set RTL_DIR    $PROJ_DIR/00_rtl
+set LIB_DIR    $PROJ_DIR/01_lib
+set SCR_DIR    $PROJ_DIR/02_scripts
+set LOGS       $PROJ_DIR/04_logs
 
-set NANGATE_DB /NangateOpenCellLibrary_typical.db
+set NANGATE_DB $PROJ_DIR/01_lib/NangateOpenCellLibrary_typical.db
 set TOP_MODULE picosoc
 set CLK_PORT   clk
 set RST_PORT   resetn
@@ -18,10 +18,10 @@ set RST_PORT   resetn
 if { ![info exists env(FREQ)] } {
     set FREQ 100mhz
 } else {
-    set FREQ (FREQ)
+    set FREQ $env(FREQ)
 }
 
-switch  {
+switch $FREQ {
     100mhz {
         set PERIOD   10.0;  set UNCERT  0.5;  set TRANS  0.2
         set IN_DLY   2.0;   set OUT_DLY 2.0
@@ -35,25 +35,28 @@ switch  {
         set IN_DLY   0.5;   set OUT_DLY 0.5
     }
     default {
-        puts ERROR: Unknown FREQ=
+        puts "ERROR: Unknown FREQ=$FREQ"
         exit 1
     }
 }
 
 # === 输出目录 ===
-set OUTPUT_DIR /03_output_
-set REPORTS    /reports
-set NETLIST    /netlist
+set OUTPUT_DIR $PROJ_DIR/03_output_
+set REPORTS    ${OUTPUT_DIR}${FREQ}/reports
+set NETLIST    ${OUTPUT_DIR}${FREQ}/netlist
 
-file mkdir 
-file mkdir 
-file mkdir 
+file mkdir $REPORTS
+file mkdir $NETLIST
 
-puts n===== =====
-puts  PERIOD : ns
-puts  UNCERT : ns
-puts  TRANS : ns
-puts  IN_DLY : ns
-puts  OUT_DLY : ns
-puts  REPORTS : 
-puts  NANGATE : 
+puts ""
+puts "=========================================="
+puts "  Common Env Loaded"
+puts "=========================================="
+puts "  PERIOD   : $PERIOD ns"
+puts "  UNCERT   : $UNCERT ns"
+puts "  TRANS    : $TRANS ns"
+puts "  IN_DLY   : $IN_DLY ns"
+puts "  OUT_DLY  : $OUT_DLY ns"
+puts "  REPORTS  : $REPORTS"
+puts "  NANGATE  : $NANGATE_DB"
+puts "=========================================="

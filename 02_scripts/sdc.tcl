@@ -5,21 +5,15 @@
 
 # --- Clock ---
 create_clock [get_ports clk] -name sys_clk \
-    -period $PERIOD -waveform {0 [expr $PERIOD / 2]}
+    -period $PERIOD \
+    -waveform [list 0.0 [expr {$PERIOD / 2.0}]]
 set_clock_uncertainty $UNCERT [get_clocks sys_clk]
-set_clock_transition $TRANS   [get_clocks sys_clk]
+set_clock_transition $TRANS [get_clocks sys_clk]
 set_dont_touch_network [get_clocks sys_clk]
 
-# --- IO Delay（修复：remove_from_collection 对空集加安全检查）---
-set all_ins [all_inputs]
-set excl_ports [get_ports "clk resetn irq_5 irq_6 irq_7"]
-set excl_size [sizeof_collection $excl_ports]
-if { $excl_size > 0 } {
-    set data_ins [remove_from_collection $all_ins $excl_ports]
-} else {
-    set data_ins $all_ins
-}
-set_input_delay  $IN_DLY  -clock sys_clk $data_ins
+# --- IO Delay ---
+set_input_delay  $IN_DLY  -clock sys_clk \
+    [remove_from_collection [all_inputs] [get_ports "clk resetn irq_5 irq_6 irq_7"]]
 set_output_delay $OUT_DLY -clock sys_clk [all_outputs]
 
 # --- Async ---
@@ -29,22 +23,9 @@ set_false_path -from [get_ports irq_6]
 set_false_path -from [get_ports irq_7]
 set_false_path -from [get_ports ser_rx]
 
-# --- Timing Groups（inline filter_collection）---
-# input -> register
-group_path -name input2reg \
-    -from [all_inputs] \
-    -to   [filter_collection [all_registers] "is_input_pin_used == true"]
-
-# register -> register (核心路径)
-group_path -name reg2reg \
-    -from [filter_collection [all_registers] "is_output_pin_used == true"] \
-    -to   [filter_collection [all_registers] "is_input_pin_used == true"]
-
-# register -> output
-group_path -name reg2out \
-    -from [filter_collection [all_registers] "is_output_pin_used == true"] \
-    -to   [all_outputs]
-
-# clock path group
-group_path -name clk \
-    -from [get_clocks sys_clk]
+# --- Timing Groups ---
+# 直接用 all_registers，不再 filter（避免属性名错误）
+group_path -name input2reg -from [all_inputs] -to [all_registers]
+group_path -name reg2reg -from [all_registers] -to [all_registers]
+group_path -name reg2out -from [all_registers] -to [all_outputs]
+group_path -name clk -from [get_clocks sys_clk]
