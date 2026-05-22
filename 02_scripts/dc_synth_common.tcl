@@ -3,56 +3,57 @@
 # 启动: FREQ=100mhz dc_shell -f dc_synth.tcl
 ###############################################################################
 
-set PROJ_DIR   "/home/xiaoai/Desktop/disk1/IC_Project/dc_synthesis_advanced"
-set RTL_DIR    "$PROJ_DIR/00_rtl"
-set LIB_DIR    "$PROJ_DIR/01_lib"
-set SCR_DIR    "$PROJ_DIR/02_scripts"
-set LOGS       "$PROJ_DIR/04_logs"
+set PROJ_DIR   /home/xiaoai/Desktop/disk1/IC_Project/dc_synthesis_advanced
+set RTL_DIR    /00_rtl
+set LIB_DIR    /01_lib
+set SCR_DIR    /02_scripts
+set LOGS       /04_logs
 
-set NANGATE_DB "$LIB_DIR/NangateOpenCellLibrary_typical.db"
-set TOP_MODULE "picosoc"
-set CLK_PORT   "clk"
-set RST_PORT   "resetn"
+set NANGATE_DB /NangateOpenCellLibrary_typical.db
+set TOP_MODULE picosoc
+set CLK_PORT   clk
+set RST_PORT   resetn
 
 # === 频率参数 ===
 if { ![info exists env(FREQ)] } {
-    set FREQ "100mhz"
+    set FREQ 100mhz
 } else {
-    set FREQ $env(FREQ)
+    set FREQ (FREQ)
 }
 
-switch $FREQ {
-    "100mhz" {
+switch  {
+    100mhz {
         set PERIOD   10.0;  set UNCERT  0.5;  set TRANS  0.2
         set IN_DLY   2.0;   set OUT_DLY 2.0
     }
-    "300mhz" {
+    300mhz {
         set PERIOD   3.333; set UNCERT  0.2;  set TRANS  0.1
         set IN_DLY   0.8;   set OUT_DLY 0.8
     }
-    "500mhz" {
+    500mhz {
         set PERIOD   2.0;   set UNCERT  0.15; set TRANS  0.08
         set IN_DLY   0.5;   set OUT_DLY 0.5
     }
     default {
-        puts "ERROR: Unknown FREQ=$FREQ"
+        puts ERROR: Unknown FREQ=
         exit 1
     }
 }
 
 # === 输出目录 ===
-set OUTPUT_DIR "$PROJ_DIR/03_output_$FREQ"
-set REPORTS    "$OUTPUT_DIR/reports"
-set NETLIST    "$OUTPUT_DIR/netlist"
+set OUTPUT_DIR /03_output_
+set REPORTS    /reports
+set NETLIST    /netlist
 
-file mkdir $REPORTS
-file mkdir $NETLIST
-file mkdir $LOGS
+file mkdir 
+file mkdir 
+file mkdir 
 
-puts "\n===== $FREQ ====="
-puts "  PERIOD   : $PERIOD ns"
-puts "  UNCERT   : $UNCERT ns"
-puts "  TRANS    : $TRANS ns"
-puts "  IN_DLY   : $IN_DLY ns"
-puts "  OUT_DLY  : $OUT_DLY ns"
-puts "  REPORTS  : $REPORTS"
+puts n===== =====
+puts  PERIOD : ns
+puts  UNCERT : ns
+puts  TRANS : ns
+puts  IN_DLY : ns
+puts  OUT_DLY : ns
+puts  REPORTS : 
+puts  NANGATE : 
