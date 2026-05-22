@@ -1,108 +1,87 @@
 ###############################################################################
-# dc_synth.tcl - DC Synthesis Main Script
-# picosoc / Nangate 45nm / compile_ultra
-#
-# Usage:
-#   source /home/xiaoai/synopsys_env_setup.sh
-#   cd /home/xiaoai/Desktop/disk1/IC_Project/dc_synthesis_advanced
-#   dc_shell -f 02_scripts/dc_synth.tcl
-#
-# Prerequisite:
-#   01_lib/NangateOpenCellLibrary_typical.db must exist
+# dc_synth.tcl - 共享综合脚本
+# 启动: FREQ=100mhz dc_shell -f dc_synth.tcl
 ###############################################################################
 
-set DC_COMMON "/home/xiaoai/Desktop/disk1/IC_Project/dc_synthesis_advanced/02_scripts/dc_common.tcl"
-source $DC_COMMON
+source $SCR_DIR/dc_synth_common.tcl
 
 puts ""
-puts "========== Loading target library =========="
+puts "=========================================="
+puts "  DC Synthesis  ($FREQ)"
+puts "=========================================="
 
-if { [file exists $NANGATE_DB] } {
-    puts "  Using Nangate 45nm: $NANGATE_DB"
-    set target_library $NANGATE_DB
-} else {
-    puts "  WARNING: Nangate .db not found, using dw_foundation"
-    set target_library $DW_DB
-}
-set link_library [concat $target_library "*"]
+# --- [1] 库 ---
+puts "\n[1] Libraries..."
+set target_library $NANGATE_DB
+set link_library   [concat $target_library "*"]
 
-puts "  target_library = $target_library"
-puts "  link_library   = $link_library"
+# --- [2] RTL ---
+puts "\n[2] RTL..."
+read_verilog $RTL_DIR/picorv32.v
+read_verilog $RTL_DIR/simpleuart.v
+read_verilog $RTL_DIR/spiflash.v
+read_verilog $RTL_DIR/spimemio.v
+read_verilog $RTL_DIR/picosoc.v
 
-puts ""
-puts "========== Reading RTL =========="
-
-set RTL_FILES [glob -directory $RTL_DIR *.v]
-
-foreach f $RTL_FILES {
-    puts "  read_verilog $f"
-    read_verilog $f
-}
-
-puts ""
-puts "========== Linking design =========="
+# --- [3] Link ---
+puts "\n[3] Link..."
 link
 current_design $TOP_MODULE
 
-puts ""
-puts "========== Clock constraints =========="
+# --- [4] SDC ---
+puts "\n[4] SDC..."
+source $SCR_DIR/sdc.tcl
 
-create_clock $CLK_PORT -period $CLK_PERIOD
-set_clock_uncertainty $CLK_UNCERTAINTY [get_clocks $CLK_PORT]
-set_clock_transition  $CLK_TRANSITION  [get_clocks $CLK_PORT]
-set_dont_touch_network [get_clocks $CLK_PORT]
+# --- [5] 设计规则 ---
+puts "\n[5] Design rules..."
+set_max_fanout      16 [current_design]
+set_max_fanout      32 [get_clocks sys_clk]
+set_max_transition   0.5 [current_design]
+set_max_capacitance 0.5 [current_design]
+puts "  max_fanout      = 16 (data) / 32 (clock)"
+puts "  max_transition  = 0.5 ns"
+puts "  max_capacitance = 0.5 pf"
 
-# Read SDC constraints
-if { [file exists "$SCR_DIR/picosoc.sdc"] } {
-    puts "  Reading SDC: $SCR_DIR/picosoc.sdc"
-    source $SCR_DIR/picosoc.sdc
-} else {
-    puts "  WARNING: picosoc.sdc not found"
-}
-puts ""
-puts "========== IO constraints =========="
+# --- [6] Clock Gating 风格 ---
+puts "\n[6] Clock gating style..."
+set_clock_gating_style     -setup     0.5     -hold      0.2     -max_gated 64
+puts "  CG: setup=0.5ns, hold=0.2ns, max_gated=64"
 
-set_input_delay  $INPUT_DELAY -clock $CLK_PORT     [remove_from_collection [all_inputs] [get_ports "$CLK_PORT $RST_PORT"]]
-set_output_delay $OUTPUT_DELAY -clock $CLK_PORT [all_outputs]
+# --- [7] Power 优化 ---
+puts "\n[7] Power optimization..."
+set_power_optimization_options     -leakage_power_effort high     -dynamic_power_effort high
+puts "  power_effort = high"
 
-set_false_path -from [get_ports $RST_PORT]
+# --- [8] Compile ---
+puts "\n[8] Compile..."
+compile_ultra     -gate_clock     -no_autoungroup     -timing     -effort high
 
-puts "  input_delay  = $INPUT_DELAY ns"
-puts "  output_delay = $OUTPUT_DELAY ns"
+# --- [9] Reports ---
+puts "\n[9] Reports..."
 
-puts ""
-puts "========== Compile =========="
-compile_ultra -gate_clock
-puts "  Done"
+report_clock_gating -hier -verbose            > "$REPORTS/clock_gating.rpt"
+report_timing -max_paths 20 -group input2reg > "$REPORTS/timing_input2reg.rpt"
+report_timing -max_paths 20 -group reg2reg   > "$REPORTS/timing_reg2reg.rpt"
+report_timing -max_paths 20 -group reg2out   > "$REPORTS/timing_reg2out.rpt"
+report_timing -max_paths 5  -group clk        > "$REPORTS/timing_clk.rpt"
+report_timing -max_paths 10                   > "$REPORTS/timing_summary.rpt"
+report_power  -analysis_effort high          > "$REPORTS/power_hq.rpt"
+report_qor                                   > "$REPORTS/qor_mapped.rpt"
+report_area                                  > "$REPORTS/area_mapped.rpt"
+report_cell                                 > "$REPORTS/cell_usage_mapped.rpt"
+report_clock                                > "$REPORTS/clock_mapped.rpt"
+puts "  done"
 
-puts ""
-puts "========== Fix hold violations (AFTER compile) =========="
-set_fix_hold [get_clocks $CLK_PORT]
-puts "  Done"
-
-puts ""
-puts "========== Reports =========="
-report_timing  -max_paths 5 > "$REPORTS/timing_mapped.rpt"
-report_timing  -max_paths 5 -delay min > "$REPORTS/hold_timing_mapped.rpt"
-report_area                     > "$REPORTS/area_mapped.rpt"
-report_cell                     > "$REPORTS/cell_usage_mapped.rpt"
-report_qor                      > "$REPORTS/qor_mapped.rpt"
-report_clock                    > "$REPORTS/clock_mapped.rpt"
-puts "  Reports written to $REPORTS/"
-
-puts ""
-puts "========== Write netlist =========="
-write -format verilog -output "$NETLIST/${TOP_MODULE}_mapped.v"
-write_sdc                        "$NETLIST/${TOP_MODULE}_mapped.sdc"
-write -format ddc                "$NETLIST/${TOP_MODULE}_mapped.ddc"
-puts "  Netlist: $NETLIST/${TOP_MODULE}_mapped.v"
+# --- [10] Netlist ---
+puts "\n[10] Netlist..."
+set NETLIST_FILE "${TOP_MODULE}_${FREQ}_mapped"
+write -format verilog -output "$NETLIST/${NETLIST_FILE}.v"
+write_sdc                        "$NETLIST/${NETLIST_FILE}.sdc"
+write -format ddc                "$NETLIST/${NETLIST_FILE}.ddc"
+puts "  ${NETLIST_FILE}.v"
 
 puts ""
 puts "=========================================="
-puts "  DC Synthesis Complete"
+puts "  Complete: $FREQ"
 puts "=========================================="
-puts "  target_library : $target_library"
-puts "  netlist        : $NETLIST/${TOP_MODULE}_mapped.v"
-puts "=========================================="
-
 exit
