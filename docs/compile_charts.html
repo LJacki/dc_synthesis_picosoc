@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>compile_ultra 选项评估结果</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f8fafc;color:#1e293b;line-height:1.5}
+  main{max-width:1100px;margin:0 auto;padding:24px 20px}
+  h1{font-size:22px;font-weight:700;margin-bottom:4px}
+  .subtitle{font-size:13px;color:#64748b;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #e2e8f0}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .metric{background:white;border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center}
+  .metric-num{font-size:26px;font-weight:800;line-height:1}
+  .metric-label{font-size:11px;color:#64748b;margin-top:4px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+  .card{background:white;border:1px solid #e2e8f0;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .card-title{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+  svg{width:100%;height:auto;display:block}
+  text{font-family:sans-serif}
+  .bar-label{font-size:11px;font-weight:600;fill:#1e293b}
+  .bar-sublabel{font-size:9px;fill:#94a3b8}
+  .axis-label{font-size:10px;fill:#94a3b8}
+  .chart-title{font-size:14px;font-weight:700;fill:#1e293b}
+  .chart-sub{font-size:10px;fill:#94a3b8}
+  .grid-line{stroke:#f1f5f9;stroke-width:1}
+  .finding{background:white;border:1px solid #e2e8f0;border-radius:10px;padding:16px}
+  .finding h4{font-size:12px;font-weight:700;margin-bottom:4px}
+  .finding p{font-size:11px;color:#64748b;line-height:1.5}
+  .findings-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px}
+  .alert-box{background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:16px;margin-bottom:24px;font-size:12px;color:#92400e}
+  .alert-box strong{display:block;margin-bottom:4px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{background:#f8fafc;padding:8px 10px;text-align:left;font-weight:700;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.03em;border-bottom:2px solid #e2e8f0}
+  td{padding:8px 10px;border-bottom:1px solid #f1f5f9}
+  tr:last-child td{border-bottom:none}
+  .badge-green{background:#d1fae5;color:#065f46;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:600}
+  .badge-blue{background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:600}
+  .badge-red{background:#fee2e2;color:#991b1b;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:600}
+  .badge-gray{background:#f1f5f9;color:#64748b;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:600}
+  .winner{background:#ecfdf5;border:2px solid #10b981;border-radius:10px;padding:16px;margin-bottom:16px;font-size:12px}
+  .winner strong{display:block;margin-bottom:4px;color:#065f46}
+  @media(max-width:768px){.grid,.findings-grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<main>
+<h1>compile_ultra 选项影响评估结果</h1>
+<p class="subtitle">picosoc @ 500MHz (PERIOD=2.0ns) | Nangate 45nm | 3组实验</p>
+
+<div class="winner">
+  <strong>🎯 推荐：Group A（基线：-gate_clock -no_autoungroup）</strong>
+  gate_clock 降低 5.7 倍动态功耗（7.91 vs 44.84 mW）；no_autoungroup 保留模块层次。
+  autoungroup 在时序/面积上无明显优势，但会破坏模块层次（Hierarchical Cell Count 从 1112→7）。
+</div>
+
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-num" style="color:#10b981">7.91 mW</div>
+    <div class="metric-label">A 动态功耗（gate_clock）</div>
+  </div>
+  <div class="metric">
+    <div class="metric-num" style="color:#ef4444">44.84 mW</div>
+    <div class="metric-label">C 动态功耗（无门控）</div>
+  </div>
+  <div class="metric">
+    <div class="metric-num" style="color:#3b82f6">5.7×</div>
+    <div class="metric-label">gate_clock 功耗收益</div>
+  </div>
+  <div class="metric">
+    <div class="metric-num" style="color:#8b5cf6">+20%</div>
+    <div class="metric-label">C vs A 面积增量</div>
+  </div>
+</div>
+
+<div class="grid">
+  <!-- Dynamic Power -->
+  <div class="card">
+    <div class="card-title">1. 动态功耗 — gate_clock 效果显著</div>
+    <svg viewBox="0 0 440 230">
+      <text x="10" y="18" class="chart-title">Total Dynamic Power (mW)</text>
+      <text x="10" y="33" class="chart-sub">C 无门控：44.84 mW，是 A/B 的 5.7 倍</text>
+      <line x1="50" y1="50" x2="50" y2="195" stroke="#e2e8f0" stroke-width="1"/>
+      <text x="46" y="55" class="axis-label" text-anchor="end">50</text>
+      <text x="46" y="100" class="axis-label" text-anchor="end">40</text>
+      <text x="46" y="145" class="axis-label" text-anchor="end">20</text>
+      <text x="46" y="195" class="axis-label" text-anchor="end">0</text>
+      <line x1="50" y1="55" x2="420" y2="55" class="grid-line"/>
+      <line x1="50" y1="145" x2="420" y2="145" class="grid-line"/>
+      <!-- A: 7.91 -> height = 7.91/50*145 = 23 -->
+      <rect x="60" y="172" width="40" height="23" fill="#3b82f6" rx="3"/>
+      <text x="80" y="214" class="bar-label" text-anchor="middle">A</text>
+      <text x="80" y="168" class="bar-sublabel" text-anchor="middle">7.91</text>
+      <!-- B: 7.69 -> height = 7.69/50*145 = 22.3 -->
+      <rect x="116" y="174" width="40" height="22" fill="#6366f1" rx="3"/>
+      <text x="136" y="214" class="bar-label" text-anchor="middle">B</text>
+      <text x="136" y="170" class="bar-sublabel" text-anchor="middle">7.69</text>
+      <!-- C: 44.84 -> height = 44.84/50*145 = 130 -->
+      <rect x="172" y="65" width="40" height="130" fill="#ef4444" rx="3"/>
+      <text x="192" y="214" class="bar-label" text-anchor="middle">C</text>
+      <text x="192" y="59" class="bar-sublabel" text-anchor="middle" fill="#ef4444">44.84</text>
+      <text x="220" y="228" class="axis-label" text-anchor="middle">Group</text>
+    </svg>
+  </div>
+
+  <!-- Cell Area -->
+  <div class="card">
+    <div class="card-title">2. 面积 — autoungroup 几乎无收益</div>
+    <svg viewBox="0 0 440 230">
+      <text x="10" y="18" class="chart-title">Cell Area (µm²)</text>
+      <text x="10" y="33" class="chart-sub">B vs A: +0.06%; C vs A: +19.8%（无门控）</text>
+      <line x1="50" y1="50" x2="50" y2="195" stroke="#e2e8f0" stroke-width="1"/>
+      <text x="46" y="55" class="axis-label" text-anchor="end">90K</text>
+      <text x="46" y="100" class="axis-label" text-anchor="end">80K</text>
+      <text x="46" y="145" class="axis-label" text-anchor="end">70K</text>
+      <text x="46" y="195" class="axis-label" text-anchor="end">60K</text>
+      <line x1="50" y1="55" x2="420" y2="55" class="grid-line"/>
+      <line x1="50" y1="145" x2="420" y2="145" class="grid-line"/>
+      <!-- A: 71985 -> 195-14472/30000*145 = 195-70 = 125 (range 60K-90K) -->
+      <!-- A(71985): (71985-60000)/(90000-60000)=11985/30000=40% -> y=195-0.4*145=137 -->
+      <rect x="60" y="137" width="40" height="58" fill="#3b82f6" rx="3"/>
+      <text x="80" y="214" class="bar-label" text-anchor="middle">A</text>
+      <text x="80" y="133" class="bar-sublabel" text-anchor="middle">72.0K</text>
+      <!-- B: 72029 -> 137.2 -->
+      <rect x="116" y="137" width="40" height="58" fill="#6366f1" rx="3"/>
+      <text x="136" y="214" class="bar-label" text-anchor="middle">B</text>
+      <text x="136" y="133" class="bar-sublabel" text-anchor="middle">72.0K</text>
+      <!-- C: 86263 -> (86263-60000)/30000=87.5% -> y=195-0.875*145=68 -->
+      <rect x="172" y="68" width="40" height="127" fill="#ef4444" rx="3"/>
+      <text x="192" y="214" class="bar-label" text-anchor="middle">C</text>
+      <text x="192" y="62" class="bar-sublabel" text-anchor="middle" fill="#ef4444">86.3K</text>
+      <text x="220" y="228" class="axis-label" text-anchor="middle">Group</text>
+    </svg>
+  </div>
+
+  <!-- Leaf Cells -->
+  <div class="card">
+    <div class="card-title">3. Leaf Cell 数量</div>
+    <svg viewBox="0 0 440 230">
+      <text x="10" y="18" class="chart-title">Leaf Cell Count</text>
+      <text x="10" y="33" class="chart-sub">C 无门控导致大量 buffer/inverter (4.6x)</text>
+      <line x1="50" y1="50" x2="50" y2="195" stroke="#e2e8f0" stroke-width="1"/>
+      <text x="46" y="55" class="axis-label" text-anchor="end">50K</text>
+      <text x="46" y="100" class="axis-label" text-anchor="end">40K</text>
+      <text x="46" y="145" class="axis-label" text-anchor="end">20K</text>
+      <text x="46" y="195" class="axis-label" text-anchor="end">0</text>
+      <line x1="50" y1="55" x2="420" y2="55" class="grid-line"/>
+      <line x1="50" y1="145" x2="420" y2="145" class="grid-line"/>
+      <!-- A: 28886 -> (28886-0)/50000*145 = 84 -->
+      <rect x="60" y="111" width="40" height="84" fill="#3b82f6" rx="3"/>
+      <text x="80" y="214" class="bar-label" text-anchor="middle">A</text>
+      <text x="80" y="107" class="bar-sublabel" text-anchor="middle">28.9K</text>
+      <!-- B: 28595 -->
+      <rect x="116" y="114" width="40" height="81" fill="#6366f1" rx="3"/>
+      <text x="136" y="214" class="bar-label" text-anchor="middle">B</text>
+      <text x="136" y="110" class="bar-sublabel" text-anchor="middle">28.6K</text>
+      <!-- C: 47261 -->
+      <rect x="172" y="68" width="40" height="127" fill="#ef4444" rx="3"/>
+      <text x="192" y="214" class="bar-label" text-anchor="middle">C</text>
+      <text x="192" y="62" class="bar-sublabel" text-anchor="middle" fill="#ef4444">47.3K</text>
+      <text x="220" y="228" class="axis-label" text-anchor="middle">Group</text>
+    </svg>
+  </div>
+
+  <!-- Leakage Power -->
+  <div class="card">
+    <div class="card-title">4. 漏功耗 & 编译时间</div>
+    <svg viewBox="0 0 440 230">
+      <text x="10" y="18" class="chart-title">Leakage Power (mW) + Compile Time (s)</text>
+      <text x="10" y="33" class="chart-sub">C 漏功耗略高(+17%)，编译时间最长</text>
+      <line x1="50" y1="50" x2="50" y2="195" stroke="#e2e8f0" stroke-width="1"/>
+      <text x="46" y="55" class="axis-label" text-anchor="end">200</text>
+      <text x="46" y="100" class="axis-label" text-anchor="end">150</text>
+      <text x="46" y="145" class="axis-label" text-anchor="end">50</text>
+      <text x="46" y="195" class="axis-label" text-anchor="end">0</text>
+      <!-- A: leakage=1.30, compile=130 -->
+      <!-- leakage bar (bottom) -->
+      <rect x="60" y="194" width="18" height="1" fill="#3b82f6" rx="1"/>
+      <!-- compile bar (top, 130/200*145=94) -->
+      <rect x="60" y="101" width="18" height="94" fill="#93c5fd" rx="1"/>
+      <text x="69" y="214" class="bar-label" text-anchor="middle">A</text>
+      <text x="69" y="97" class="bar-sublabel" text-anchor="middle">130s</text>
+      <text x="69" y="197" class="bar-sublabel" text-anchor="middle" font-size="8">1.3mW</text>
+      <!-- B: leakage=1.30, compile=175 -->
+      <rect x="116" y="194" width="18" height="1" fill="#6366f1" rx="1"/>
+      <rect x="116" y="67" width="18" height="128" fill="#a5b4fc" rx="1"/>
+      <text x="125" y="214" class="bar-label" text-anchor="middle">B</text>
+      <text x="125" y="63" class="bar-sublabel" text-anchor="middle">176s</text>
+      <text x="125" y="197" class="bar-sublabel" text-anchor="middle" font-size="8">1.3mW</text>
+      <!-- C: leakage=1.53, compile=193 -->
+      <rect x="172" y="194" width="18" height="1" fill="#ef4444" rx="1"/>
+      <rect x="172" y="54" width="18" height="141" fill="#fca5a5" rx="1"/>
+      <text x="181" y="214" class="bar-label" text-anchor="middle">C</text>
+      <text x="181" y="50" class="bar-sublabel" text-anchor="middle">193s</text>
+      <text x="181" y="197" class="bar-sublabel" text-anchor="middle" font-size="8">1.5mW</text>
+      <text x="220" y="228" class="axis-label" text-anchor="middle">Group</text>
+      <text x="10" y="218" class="chart-sub" font-size="9">■ compile time  ■ leakage</text>
+    </svg>
+  </div>
+</div>
+
+<!-- Summary Table -->
+<div class="card">
+  <div class="card-title">5. 完整数据汇总</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Group</th><th>compile_ultra 选项</th><th>WNS(ns)</th><th>Area(µm²)</th>
+        <th>Leaf Cells</th><th>LoL</th><th>Hold WNS(ns)</th>
+        <th>动态功耗(mW)</th><th>漏功耗(mW)</th><th>编译(s)</th><th>评估</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>A</strong></td>
+        <td><code>-gate_clock -no_autoungroup</code></td>
+        <td><span class="badge-green">0.00</span></td>
+        <td>71,985</td>
+        <td>28,886</td>
+        <td>39</td>
+        <td>0.06</td>
+        <td>7.91</td>
+        <td>1.30</td>
+        <td>130</td>
+        <td><span class="badge-green">✅ 基线</span></td>
+      </tr>
+      <tr>
+        <td><strong>B</strong></td>
+        <td><code>-gate_clock</code> (默认解组)</td>
+        <td><span class="badge-green">0.00</span></td>
+        <td>72,029 (+0.06%)</td>
+        <td>28,595</td>
+        <td>38</td>
+        <td>0.06</td>
+        <td>7.69 (-2.8%)</td>
+        <td>1.30</td>
+        <td>176</td>
+        <td><span class="badge-blue">🟡 可用</span></td>
+      </tr>
+      <tr>
+        <td><strong>C</strong></td>
+        <td><code>-no_autoungroup</code> (无门控)</td>
+        <td><span class="badge-green">0.00</span></td>
+        <td>86,263 (+19.8%)</td>
+        <td>47,261 (+63.6%)</td>
+        <td>37</td>
+        <td>0.05</td>
+        <td>44.84 (+467%)</td>
+        <td>1.53 (+17%)</td>
+        <td>193</td>
+        <td><span class="badge-red">❌ 不推荐</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Key Findings -->
+<div class="findings-grid">
+  <div class="finding">
+    <h4>⚡ gate_clock 效果惊人</h4>
+    <p>启用 -gate_clock 动态功耗降低 5.7 倍（7.91 vs 44.84 mW）。无门控时所有寄存器每周期翻转，clock tree 功耗暴涨。</p>
+  </div>
+  <div class="finding">
+    <h4>🏛️ autoungroup 无实质收益</h4>
+    <p>B vs A：面积几乎相同（+0.06%），LoL 仅减少 1，编译时间反而增加 35%。但模块层次被破坏（Hierarchical Cell Count 从 1112→7）。</p>
+  </div>
+  <div class="finding">
+    <h4>🔋 功耗是最大差异</h4>
+    <p>C 无门控时漏功耗也高出 17%（1.53 vs 1.30 mW），Hold violations 多 2 倍（1493 vs 755），整体健壮性最差。</p>
+  </div>
+</div>
+
+<div class="alert-box">
+  <strong>⚠️ 重要结论：不要关闭 clock gating</strong>
+  -gate_clock 是 DC 降低功耗最重要的选项之一。对 picosoc 这类移动/嵌入式处理器设计，44.84 mW vs 7.91 mW 的差距在实际应用中非常关键。<br>
+  no_autoungroup 保留模块层次，便于后续 debug 和 timing analysis，收益大于成本（+46s 编译时间）。
+</div>
+</main>
+</body>
+</html>
