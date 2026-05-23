@@ -18,3 +18,17 @@ work/
 
 # OS junk
 .DS_Store
+
+# DC synthesis artifacts
+*.mr
+*.pvl
+*.syn
+*.svf
+PICORV32*.mr
+PICOSOC*.mr
+SIMPLEUART.mr
+SPIFLASH.mr
+SPIMEMIO*.mr
+
+# Individual output dirs (generated)
+03_output_*/

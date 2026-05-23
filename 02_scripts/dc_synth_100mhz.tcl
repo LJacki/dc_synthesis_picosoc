@@ -1,5 +1,5 @@
 ###############################################################################
-# dc_synth_300mhz.tcl - 300MHz DC Synthesis Script
+# dc_synth_300mhz.tcl - 100MHz DC Synthesis Script
 # Strategy: source SDC first (gets all constraints), then override clock period
 ###############################################################################
 
@@ -8,14 +8,14 @@ set SCR_DIR   $PROJ_DIR/02_scripts
 set RTL_DIR   $PROJ_DIR/00_rtl
 set LIB_DIR   $PROJ_DIR/01_lib
 set NANGATE_DB $LIB_DIR/NangateOpenCellLibrary_typical.db
-set REPORTS   $PROJ_DIR/03_output_300mhz/reports
-set NETLIST   $PROJ_DIR/03_output_300mhz/netlist
-set OUTPUT    $PROJ_DIR/03_output_300mhz
+set REPORTS   $PROJ_DIR/03_output_100mhz/reports
+set NETLIST   $PROJ_DIR/03_output_100mhz/netlist
+set OUTPUT    $PROJ_DIR/03_output_100mhz
 set LOGS      $PROJ_DIR/04_logs
 
-# 300MHz parameters
-set CLK_PERIOD      3.333
-set CLK_UNCERTAINTY 0.1
+# 100MHz parameters
+set CLK_PERIOD      10.0
+set CLK_UNCERTAINTY 0.2
 set INPUT_DELAY     0.5
 set OUTPUT_DELAY    0.5
 set TOP_MODULE      picosoc
@@ -26,7 +26,7 @@ file mkdir $REPORTS
 file mkdir $NETLIST
 
 puts ""
-puts "========== 300MHz Synthesis =========="
+puts "========== 100MHz Synthesis =========="
 puts "  CLK_PERIOD      : $CLK_PERIOD ns"
 puts "  CLK_UNCERTAINTY : $CLK_UNCERTAINTY ns"
 
@@ -61,7 +61,7 @@ puts "========== Source SDC (gets all constraints) =========="
 source $SCR_DIR/picosoc.sdc
 
 puts ""
-puts "========== Override clock period to 300MHz =========="
+puts "========== Override clock period to 100MHz =========="
 create_clock $CLK_PORT -period $CLK_PERIOD
 set_clock_uncertainty $CLK_UNCERTAINTY [get_clocks sys_clk]
 
@@ -100,7 +100,7 @@ puts "  Netlist: $NETLIST/${TOP_MODULE}_mapped.v"
 
 puts ""
 puts "=========================================="
-puts "  DC 300MHz Synthesis Complete"
+puts "  DC 100MHz Synthesis Complete"
 puts "  CLK_PERIOD : $CLK_PERIOD ns"
 puts "=========================================="
 
