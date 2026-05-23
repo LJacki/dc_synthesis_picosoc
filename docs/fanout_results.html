@@ -1,0 +1,711 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>set_max_fanout Evaluation Results</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f8fafc;
+    --fg: #1e293b;
+    --muted: #64748b;
+    --line: #94a3b8;
+    --neutral: #e2e8f0;
+    --a: #3b82f6;
+    --b: #6366f1;
+    --c: #8b5cf6;
+    --d: #a855f7;
+    --e: #d946ef;
+    --f: #ec4899;
+    --good: #10b981;
+    --warn: #f59e0b;
+    --risk: #ef4444;
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 14px/1.4 ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+  header {
+    margin-bottom: 32px;
+    border-bottom: 2px solid var(--neutral);
+    padding-bottom: 16px;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: var(--fg);
+  }
+  .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  .card {
+    background: white;
+    border: 1px solid var(--neutral);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 16px 0;
+  }
+  .card h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: var(--fg);
+  }
+  .card p {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0;
+  }
+  svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .bar-label {
+    font-size: 11px;
+    font-weight: 600;
+    fill: var(--fg);
+  }
+  .bar-sublabel {
+    font-size: 10px;
+    fill: var(--muted);
+  }
+  .axis-label {
+    font-size: 11px;
+    fill: var(--muted);
+  }
+  .chart-title {
+    font-size: 15px;
+    font-weight: 700;
+    fill: var(--fg);
+  }
+  .chart-subtitle {
+    font-size: 11px;
+    fill: var(--muted);
+  }
+  .unit-label {
+    font-size: 10px;
+    fill: var(--muted);
+  }
+  .grid-line {
+    stroke: #f1f5f9;
+    stroke-width: 1;
+  }
+  .legend-text {
+    font-size: 10px;
+    fill: var(--muted);
+  }
+  .highlight-box {
+    background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%);
+    border: 1px solid #c7d2fe;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 32px;
+  }
+  .highlight-box h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+    color: var(--fg);
+  }
+  .findings {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .finding {
+    background: white;
+    border-radius: 8px;
+    padding: 14px;
+    border: 1px solid #e0e7ff;
+  }
+  .finding-icon {
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+  .finding h4 {
+    font-size: 12px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: var(--fg);
+  }
+  .finding p {
+    font-size: 11px;
+    color: var(--muted);
+    margin: 0;
+    line-height: 1.5;
+  }
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 16px;
+  }
+  .summary-table th {
+    background: #f8fafc;
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 700;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 2px solid var(--neutral);
+  }
+  .summary-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    color: var(--fg);
+  }
+  .summary-table tr:last-child td {
+    border-bottom: none;
+  }
+  .badge-good { background: #d1fae5; color: #065f46; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 600; }
+  .badge-warn { background: #fef3c7; color: #92400e; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 600; }
+  .badge-neutral { background: #f1f5f9; color: #475569; border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 600; }
+  .metric-card {
+    background: white;
+    border: 1px solid var(--neutral);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .metric-big {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--a);
+    line-height: 1;
+  }
+  .metric-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+    .metrics-row { grid-template-columns: repeat(2, 1fr); }
+    .findings { grid-template-columns: 1fr; }
+  }
+</style>
+<main>
+  <header>
+    <h1>set_max_fanout 对综合结果的影响评估</h1>
+    <p class="subtitle">picosoc @ 500MHz | Nangate 45nm | 6组实验 (fanout=4/8/16/32/64/unset)</p>
+  </header>
+
+  <!-- Key Metrics Row -->
+  <div class="metrics-row">
+    <div class="metric-card">
+      <div class="metric-big" style="color:#10b981">6/6</div>
+      <div class="metric-label">全部 meet timing</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-big" style="color:#f59e0b">8.8%</div>
+      <div class="metric-label">fanout=4 面积增量</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-big" style="color:#3b82f6">16</div>
+      <div class="metric-label">最优 fanout 值</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-big" style="color:#8b5cf6">5.6x</div>
+      <div class="metric-label">fanout=4 buffer 倍数</div>
+    </div>
+  </div>
+
+  <!-- Charts Grid -->
+  <div class="grid">
+    <!-- Area Chart -->
+    <div class="card">
+      <p class="card-title">1. 面积 (Cell Area)</p>
+      <svg viewBox="0 0 460 240">
+        <text x="10" y="18" class="chart-title">面积随 fanout 减小而增大</text>
+        <text x="10" y="34" class="chart-subtitle">fanout 越小 → buffer 越多 → 面积越大</text>
+
+        <!-- Y axis -->
+        <line x1="50" y1="50" x2="50" y2="200" stroke="#e2e8f0" stroke-width="1"/>
+        <text x="46" y="55" class="axis-label" text-anchor="end">78K</text>
+        <text x="46" y="88" class="axis-label" text-anchor="end">76K</text>
+        <text x="46" y="121" class="axis-label" text-anchor="end">74K</text>
+        <text x="46" y="154" class="axis-label" text-anchor="end">72K</text>
+        <text x="46" y="187" class="axis-label" text-anchor="end">70K</text>
+        <text x="46" y="207" class="axis-label" text-anchor="end">68K</text>
+
+        <!-- Grid lines -->
+        <line x1="50" y1="55" x2="430" y2="55" class="grid-line"/>
+        <line x1="50" y1="88" x2="430" y2="88" class="grid-line"/>
+        <line x1="50" y1="121" x2="430" y2="121" class="grid-line"/>
+        <line x1="50" y1="154" x2="430" y2="154" class="grid-line"/>
+        <line x1="50" y1="187" x2="430" y2="187" class="grid-line"/>
+
+        <!-- Bars -->
+        <!-- A: 77197 → 77.2K, height = (77197-68000)/(78000-68000)*150 = 9197/10000*150 = 138 -->
+        <rect x="60" y="50" width="40" height="150" fill="#3b82f6" rx="3"/>
+        <text x="80" y="212" class="bar-label" text-anchor="middle">4</text>
+        <text x="80" y="46" class="bar-sublabel" text-anchor="middle">77.2K</text>
+
+        <!-- B: 73394 → 73.4K, height = (73394-68000)/10000*150 = 54/100*150 = 8.1*15=121.5 -->
+        <rect x="120" y="88" width="40" height="112" fill="#6366f1" rx="3"/>
+        <text x="140" y="212" class="bar-label" text-anchor="middle">8</text>
+        <text x="140" y="84" class="bar-sublabel" text-anchor="middle">73.4K</text>
+
+        <!-- C: 71883 → 71.9K, height = (71883-68000)/10000*150 = 38.8/100*150 = 58 -->
+        <rect x="180" y="121" width="40" height="79" fill="#8b5cf6" rx="3"/>
+        <text x="200" y="212" class="bar-label" text-anchor="middle">16</text>
+        <text x="200" y="117" class="bar-sublabel" text-anchor="middle">71.9K</text>
+
+        <!-- D: 71378 → 71.4K, height = (71378-68000)/10000*150 = 33.8/100*150 = 50.7 -->
+        <rect x="240" y="130" width="40" height="70" fill="#a855f7" rx="3"/>
+        <text x="260" y="212" class="bar-label" text-anchor="middle">32</text>
+        <text x="260" y="126" class="bar-sublabel" text-anchor="middle">71.4K</text>
+
+        <!-- E: 71264 → 71.3K, height = (71264-68000)/10000*150 = 32.6/100*150 = 49 -->
+        <rect x="300" y="132" width="40" height="68" fill="#d946ef" rx="3"/>
+        <text x="320" y="212" class="bar-label" text-anchor="middle">64</text>
+        <text x="320" y="128" class="bar-sublabel" text-anchor="middle">71.3K</text>
+
+        <!-- F: 71263 → 71.3K -->
+        <rect x="360" y="132" width="40" height="68" fill="#ec4899" rx="3"/>
+        <text x="380" y="212" class="bar-label" text-anchor="middle">unset</text>
+        <text x="380" y="128" class="bar-sublabel" text-anchor="middle">71.3K</text>
+
+        <!-- X axis label -->
+        <text x="220" y="228" class="axis-label" text-anchor="middle">set_max_fanout value</text>
+        <!-- Y axis unit -->
+        <text x="12" y="130" class="unit-label" text-anchor="middle" transform="rotate(-90 12 130)">µm²</text>
+
+        <!-- Delta annotation -->
+        <line x1="80" y1="52" x2="320" y2="134" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="340" y="98" fill="#ef4444" font-size="10" font-weight="700">+8.3%</text>
+        <text x="340" y="110" fill="#ef4444" font-size="9">area</text>
+      </svg>
+      <h3>面积影响</h3>
+      <p>fanout=4 比 unset 多消耗 8.3% 面积（5,934 µm²），主要来自大量 buffer 树插入</p>
+    </div>
+
+    <!-- Buffer Count Chart -->
+    <div class="card">
+      <p class="card-title">2. Buffer 数量 (Buf/Inv Cell Count)</p>
+      <svg viewBox="0 0 460 240">
+        <text x="10" y="18" class="chart-title">Buffer 数量急剧下降</text>
+        <text x="10" y="34" class="chart-subtitle">fanout 约束越紧 → 插入越多 buffer 树</text>
+
+        <!-- Y axis -->
+        <line x1="50" y1="50" x2="50" y2="200" stroke="#e2e8f0" stroke-width="1"/>
+        <text x="46" y="55" class="axis-label" text-anchor="end">10K</text>
+        <text x="46" y="95" class="axis-label" text-anchor="end">8K</text>
+        <text x="46" y="135" class="axis-label" text-anchor="end">6K</text>
+        <text x="46" y="175" class="axis-label" text-anchor="end">2K</text>
+        <text x="46" y="200" class="axis-label" text-anchor="end">0</text>
+
+        <line x1="50" y1="55" x2="430" y2="55" class="grid-line"/>
+        <line x1="50" y1="95" x2="430" y2="95" class="grid-line"/>
+        <line x1="50" y1="135" x2="430" y2="135" class="grid-line"/>
+        <line x1="50" y1="175" x2="430" y2="175" class="grid-line"/>
+
+        <!-- Bars: A=9683, B=4654, C=2703, D=1894, E=1719, F=1727 -->
+        <!-- A: 9683/10000*150 = 145 -->
+        <rect x="60" y="55" width="40" height="145" fill="#3b82f6" rx="3"/>
+        <text x="80" y="212" class="bar-label" text-anchor="middle">4</text>
+        <text x="80" y="51" class="bar-sublabel" text-anchor="middle">9,683</text>
+
+        <!-- B: 4654/10000*150 = 70 -->
+        <rect x="120" y="130" width="40" height="70" fill="#6366f1" rx="3"/>
+        <text x="140" y="212" class="bar-label" text-anchor="middle">8</text>
+        <text x="140" y="126" class="bar-sublabel" text-anchor="middle">4,654</text>
+
+        <!-- C: 2703/10000*150 = 40.5 -->
+        <rect x="180" y="160" width="40" height="40" fill="#8b5cf6" rx="3"/>
+        <text x="200" y="212" class="bar-label" text-anchor="middle">16</text>
+        <text x="200" y="156" class="bar-sublabel" text-anchor="middle">2,703</text>
+
+        <!-- D: 1894/10000*150 = 28.4 -->
+        <rect x="240" y="172" width="40" height="28" fill="#a855f7" rx="3"/>
+        <text x="260" y="212" class="bar-label" text-anchor="middle">32</text>
+        <text x="260" y="168" class="bar-sublabel" text-anchor="middle">1,894</text>
+
+        <!-- E: 1719/10000*150 = 25.8 -->
+        <rect x="300" y="175" width="40" height="25" fill="#d946ef" rx="3"/>
+        <text x="320" y="212" class="bar-label" text-anchor="middle">64</text>
+        <text x="320" y="171" class="bar-sublabel" text-anchor="middle">1,719</text>
+
+        <!-- F: 1727 -->
+        <rect x="360" y="175" width="40" height="25" fill="#ec4899" rx="3"/>
+        <text x="380" y="212" class="bar-label" text-anchor="middle">unset</text>
+        <text x="380" y="171" class="bar-sublabel" text-anchor="middle">1,727</text>
+
+        <text x="220" y="228" class="axis-label" text-anchor="middle">set_max_fanout value</text>
+
+        <!-- Annotation -->
+        <line x1="80" y1="57" x2="80" y2="200" stroke="#ef4444" stroke-width="2"/>
+        <text x="84" y="180" fill="#ef4444" font-size="9" font-weight="700">5.6x</text>
+        <text x="84" y="192" fill="#ef4444" font-size="9">more</text>
+      </svg>
+      <h3>Buffer 成本</h3>
+      <p>fanout=4 插入了 9,683 个 buffer，是 unset 的 5.6 倍，且这些 buffer 几乎全是为解决高扇出而加的</p>
+    </div>
+
+    <!-- Critical Path Chart -->
+    <div class="card">
+      <p class="card-title">3. 关键路径延迟 (Critical Path Delay)</p>
+      <svg viewBox="0 0 460 240">
+        <text x="10" y="18" class="chart-title">路径延迟与 fanout 非线性相关</text>
+        <text x="10" y="34" class="chart-subtitle">DC 优化具有非确定性，延迟不完全随 fanout 增大而增大</text>
+
+        <!-- Y axis -->
+        <line x1="50" y1="50" x2="50" y2="200" stroke="#e2e8f0" stroke-width="1"/>
+        <text x="46" y="55" class="axis-label" text-anchor="end">1.4ns</text>
+        <text x="46" y="88" class="axis-label" text-anchor="end">1.2ns</text>
+        <text x="46" y="121" class="axis-label" text-anchor="end">1.0ns</text>
+        <text x="46" y="154" class="axis-label" text-anchor="end">0.8ns</text>
+        <text x="46" y="187" class="axis-label" text-anchor="end">0.6ns</text>
+
+        <line x1="50" y1="55" x2="430" y2="55" class="grid-line"/>
+        <line x1="50" y1="88" x2="430" y2="88" class="grid-line"/>
+        <line x1="50" y1="121" x2="430" y2="121" class="grid-line"/>
+        <line x1="50" y1="154" x2="430" y2="154" class="grid-line"/>
+        <line x1="50" y1="187" x2="430" y2="187" class="grid-line"/>
+
+        <!-- Period reference line -->
+        <line x1="50" y1="200" x2="430" y2="200" stroke="#10b981" stroke-width="2" stroke-dasharray="6 4"/>
+        <text x="432" y="204" fill="#10b981" font-size="10" font-weight="700">period=2.0ns</text>
+
+        <!-- CP values: A=0.76, B=0.78, C=0.81, D=0.78, E=1.29, F=0.79 -->
+        <!-- scale: 0.6ns=200, 1.4ns=50, range 0.8ns, offset -->
+        <!-- A: 0.76 -> y = 200 - (0.76-0.6)/0.8*150 = 200 - 0.16/0.8*150 = 200 - 30 = 170 -->
+        <rect x="60" y="170" width="40" height="30" fill="#3b82f6" rx="3"/>
+        <text x="80" y="212" class="bar-label" text-anchor="middle">4</text>
+        <text x="80" y="166" class="bar-sublabel" text-anchor="middle">0.76ns</text>
+
+        <!-- B: 0.78 -> y = 200 - (0.78-0.6)/0.8*150 = 200 - 33.75 = 166.25 -->
+        <rect x="120" y="166" width="40" height="34" fill="#6366f1" rx="3"/>
+        <text x="140" y="212" class="bar-label" text-anchor="middle">8</text>
+        <text x="140" y="162" class="bar-sublabel" text-anchor="middle">0.78ns</text>
+
+        <!-- C: 0.81 -> y = 200 - (0.81-0.6)/0.8*150 = 200 - 39.4 = 160.6 -->
+        <rect x="180" y="161" width="40" height="39" fill="#8b5cf6" rx="3"/>
+        <text x="200" y="212" class="bar-label" text-anchor="middle">16</text>
+        <text x="200" y="157" class="bar-sublabel" text-anchor="middle">0.81ns</text>
+
+        <!-- D: 0.78 -> y = 200 - 33.75 = 166.25 -->
+        <rect x="240" y="166" width="40" height="34" fill="#a855f7" rx="3"/>
+        <text x="260" y="212" class="bar-label" text-anchor="middle">32</text>
+        <text x="260" y="162" class="bar-sublabel" text-anchor="middle">0.78ns</text>
+
+        <!-- E: 1.29 -> y = 200 - (1.29-0.6)/0.8*150 = 200 - 129.4 = 70.6 -->
+        <rect x="300" y="71" width="40" height="129" fill="#d946ef" rx="3"/>
+        <text x="320" y="212" class="bar-label" text-anchor="middle">64</text>
+        <text x="320" y="67" class="bar-sublabel" text-anchor="middle">1.29ns</text>
+
+        <!-- F: 0.79 -> y = 200 - 35.6 = 164.4 -->
+        <rect x="360" y="164" width="40" height="36" fill="#ec4899" rx="3"/>
+        <text x="380" y="212" class="bar-label" text-anchor="middle">unset</text>
+        <text x="380" y="160" class="bar-sublabel" text-anchor="middle">0.79ns</text>
+
+        <text x="220" y="228" class="axis-label" text-anchor="middle">set_max_fanout value</text>
+
+        <!-- E anomaly note -->
+        <text x="320" y="60" fill="#ef4444" font-size="9" font-weight="700" text-anchor="middle">⚠ 1.29ns</text>
+        <text x="320" y="56" fill="#ef4444" font-size="8" text-anchor="middle">(unexpected)</text>
+      </svg>
+      <h3>时序分析</h3>
+      <p>fanout=64 意外出现最长路径（1.29ns），且 Levels of Logic=24（最高），出现 Max Cap Violations。DC 在宽松约束下优化方向偏离</p>
+    </div>
+
+    <!-- Power Chart -->
+    <div class="card">
+      <p class="card-title">4. 功耗 (Total Power = Dynamic + Leakage)</p>
+      <svg viewBox="0 0 460 240">
+        <text x="10" y="18" class="chart-title">功耗差异极小（&lt;2%）</text>
+        <text x="10" y="34" class="chart-subtitle">Buffer 数量对功耗的影响在本设计中可忽略</text>
+
+        <!-- Y axis -->
+        <line x1="50" y1="50" x2="50" y2="200" stroke="#e2e8f0" stroke-width="1"/>
+        <text x="46" y="55" class="axis-label" text-anchor="end">9.2mW</text>
+        <text x="46" y="83" class="axis-label" text-anchor="end">9.0mW</text>
+        <text x="46" y="111" class="axis-label" text-anchor="end">8.8mW</text>
+        <text x="46" y="139" class="axis-label" text-anchor="end">8.6mW</text>
+        <text x="46" y="167" class="axis-label" text-anchor="end">8.4mW</text>
+        <text x="46" y="195" class="axis-label" text-anchor="end">8.2mW</text>
+
+        <line x1="50" y1="55" x2="430" y2="55" class="grid-line"/>
+        <line x1="50" y1="83" x2="430" y2="83" class="grid-line"/>
+        <line x1="50" y1="111" x2="430" y2="111" class="grid-line"/>
+        <line x1="50" y1="139" x2="430" y2="139" class="grid-line"/>
+        <line x1="50" y1="167" x2="430" y2="167" class="grid-line"/>
+
+        <!-- Power: A=8.98, B=8.86, C=8.84, D=8.83, E=8.83, F=8.81 -->
+        <!-- Range 8.2 to 9.2, span 1.0mW = 150px, so 1mW=150px -->
+        <!-- A: 8.98 -> y = 200 - (8.98-8.2)/1.0*150 = 200 - 117 = 83 -->
+        <rect x="60" y="83" width="40" height="117" fill="#3b82f6" rx="3"/>
+        <text x="80" y="212" class="bar-label" text-anchor="middle">4</text>
+        <text x="80" y="79" class="bar-sublabel" text-anchor="middle">8.98mW</text>
+
+        <!-- B: 8.86 -> y = 200 - 99 = 101 -->
+        <rect x="120" y="101" width="40" height="99" fill="#6366f1" rx="3"/>
+        <text x="140" y="212" class="bar-label" text-anchor="middle">8</text>
+        <text x="140" y="97" class="bar-sublabel" text-anchor="middle">8.86mW</text>
+
+        <!-- C: 8.84 -> y = 200 - 96 = 104 -->
+        <rect x="180" y="104" width="40" height="96" fill="#8b5cf6" rx="3"/>
+        <text x="200" y="212" class="bar-label" text-anchor="middle">16</text>
+        <text x="200" y="100" class="bar-sublabel" text-anchor="middle">8.84mW</text>
+
+        <!-- D: 8.83 -> y = 200 - 94.5 = 105.5 -->
+        <rect x="240" y="106" width="40" height="94" fill="#a855f7" rx="3"/>
+        <text x="260" y="212" class="bar-label" text-anchor="middle">32</text>
+        <text x="260" y="102" class="bar-sublabel" text-anchor="middle">8.83mW</text>
+
+        <!-- E: 8.83 -->
+        <rect x="300" y="106" width="40" height="94" fill="#d946ef" rx="3"/>
+        <text x="320" y="212" class="bar-label" text-anchor="middle">64</text>
+        <text x="320" y="102" class="bar-sublabel" text-anchor="middle">8.83mW</text>
+
+        <!-- F: 8.81 -> y = 200 - 91.5 = 108.5 -->
+        <rect x="360" y="109" width="40" height="91" fill="#ec4899" rx="3"/>
+        <text x="380" y="212" class="bar-label" text-anchor="middle">unset</text>
+        <text x="380" y="105" class="bar-sublabel" text-anchor="middle">8.81mW</text>
+
+        <text x="220" y="228" class="axis-label" text-anchor="middle">set_max_fanout value</text>
+
+        <!-- Delta annotation -->
+        <line x1="80" y1="83" x2="380" y2="109" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="230" y="88" fill="#f59e0b" font-size="10" font-weight="700">差值仅 0.17mW</text>
+        <text x="230" y="100" fill="#f59e0b" font-size="9">(1.9%)</text>
+      </svg>
+      <h3>功耗分析</h3>
+      <p>总功耗差异仅 0.17mW（1.9%），主要来自 buffer 的动态功耗增量，但本设计中泄漏功耗占比更高（~15%），所以整体差异不显著</p>
+    </div>
+  </div>
+
+  <!-- Summary Table -->
+  <div class="card">
+    <p class="card-title">5. 完整数据汇总</p>
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>Group</th>
+          <th>fanout</th>
+          <th>WNS</th>
+          <th>Area (µm²)</th>
+          <th>Leaf Cells</th>
+          <th>Buf/Inv</th>
+          <th>Power (mW)</th>
+          <th>LoL</th>
+          <th>CP (ns)</th>
+          <th>评估</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>A</td><td>4</td>
+          <td><span class="badge-good">0.00</span></td>
+          <td>77,197</td><td>37,230</td><td>9,683</td>
+          <td>8.98</td><td>19</td><td>0.76</td>
+          <td><span class="badge-warn">浪费资源</span></td>
+        </tr>
+        <tr>
+          <td>B</td><td>8</td>
+          <td><span class="badge-good">0.00</span></td>
+          <td>73,394</td><td>32,237</td><td>4,654</td>
+          <td>8.86</td><td>17</td><td>0.78</td>
+          <td><span class="badge-neutral">过渡</span></td>
+        </tr>
+        <tr>
+          <td>C</td><td>16</td>
+          <td><span class="badge-good">0.00</span></td>
+          <td>71,883</td><td>30,191</td><td>2,703</td>
+          <td>8.84</td><td>16</td><td>0.81</td>
+          <td><span class="badge-good">推荐</span></td>
+        </tr>
+        <tr>
+          <td>D</td><td>32</td>
+          <td><span class="badge-good">0.00</span></td>
+          <td>71,378</td><td>29,453</td><td>1,894</td>
+          <td>8.83</td><td>16</td><td>0.78</td>
+          <td><span class="badge-good">可用</span></td>
+        </tr>
+        <tr>
+          <td>E</td><td>64</td>
+          <td><span class="badge-good">0.00</span></td>
+          <td>71,264</td><td>29,211</td><td>1,719</td>
+          <td>8.83</td><tdtd>24</td><td>1.29</td>
+          <td><span class="badge-warn">⚠ 异常</span></td>
+        </tr>
+        <tr>
+          <td>F</td><td>unset</td>
+          <td><span class="badge-good">0.00</span></td>
+          <td>71,263</td><td>29,235</td><td>1,727</td>
+          <td>8.81</td><td>17</td><td>0.79</td>
+          <td><span class="badge-good">DC 自动</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Key Findings -->
+  <div class="highlight-box">
+    <h2>关键发现</h2>
+    <div class="findings">
+      <div class="finding">
+        <div class="finding-icon">🎯</div>
+        <h4>最优值：fanout=16</h4>
+        <p>buffer 数量、面积、时序三者达到最佳平衡。是本项目和大多数 ASIC 设计的推荐默认值。</p>
+      </div>
+      <div class="finding">
+        <div class="finding-icon">⚡</div>
+        <h4>时序全部 Meet</h4>
+        <p>6 组实验在 500MHz 下全部 WNS=0.00，说明本设计不受 fanout 限制，瓶颈在逻辑深度而非布线。</p>
+      </div>
+      <div class="finding">
+        <div class="finding-icon">⚠️</div>
+        <h4>fanout=64 异常</h4>
+        <p>LoL=24（最高）且 CP=1.29ns（最长），出现 4 个 Max Cap Violations。过大 fanout 反而导致 DC 优化失控。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trade-off Summary Chart -->
+  <div class="card">
+    <p class="card-title">6. Trade-off 可视化（维度归一化）</p>
+    <svg viewBox="0 0 700 220">
+      <text x="10" y="18" class="chart-title">六维度综合对比（每项归一化到 0-100%）</text>
+      <text x="10" y="34" class="chart-subtitle">100% = 最优值 | 0% = 最差值（每维度独立归一化）</text>
+
+      <!-- Y axis labels -->
+      <text x="160" y="60" class="axis-label" text-anchor="end">Area ↓</text>
+      <text x="160" y="85" class="axis-label" text-anchor="end">Buffer ↓</text>
+      <text x="160" y="110" class="axis-label" text-anchor="end">Power ↓</text>
+      <text x="160" y="135" class="axis-label" text-anchor="end">CP ↓</text>
+      <text x="160" y="160" class="axis-label" text-anchor="end">LoL ↓</text>
+      <text x="160" y="185" class="axis-label" text-anchor="end">Leaf ↓</text>
+
+      <!-- Scale: 0-100% = 160px width starting at x=170, each group = 70px -->
+      <!-- A: Area worst=77197, best=71263. norm=(77197-71263)/(77197-71263)=0%. buf=(9683-1719)/(9683-1719)=0%. Power=(8.98-8.81)/(8.98-8.81)=0% -->
+      <!-- For Area: worst=77197, best=71263. A=(77197-77197)/(77197-71263)=0%, B=64%, C=87%, D=95%, E=96%, F=96% -->
+      <!-- 0%=160px, 100%=320px (160px range) -->
+
+      <!-- Group labels -->
+      <text x="205" y="200" class="bar-label" text-anchor="middle">A=4</text>
+      <text x="275" y="200" class="bar-label" text-anchor="middle">B=8</text>
+      <text x="345" y="200" class="bar-label" text-anchor="middle">C=16</text>
+      <text x="415" y="200" class="bar-label" text-anchor="middle">D=32</text>
+      <text x="485" y="200" class="bar-label" text-anchor="middle">E=64</text>
+      <text x="555" y="200" class="bar-label" text-anchor="middle">F=unset</text>
+
+      <!-- Vertical guide -->
+      <line x1="170" y1="50" x2="170" y2="195" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 4"/>
+      <line x1="330" y1="50" x2="330" y2="195" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 4"/>
+      <text x="170" y="210" class="legend-text" text-anchor="middle">0%</text>
+      <text x="330" y="210" class="legend-text" text-anchor="middle">100%</text>
+
+      <!-- Horizontal lines -->
+      <line x1="165" y1="60" x2="600" y2="60" stroke="#f1f5f9" stroke-width="1"/>
+      <line x1="165" y1="85" x2="600" y2="85" stroke="#f1f5f9" stroke-width="1"/>
+      <line x1="165" y1="110" x2="600" y2="110" stroke="#f1f5f9" stroke-width="1"/>
+      <line x1="165" y1="135" x2="600" y2="135" stroke="#f1f5f9" stroke-width="1"/>
+      <line x1="165" y1="160" x2="600" y2="160" stroke="#f1f5f9" stroke-width="1"/>
+
+      <!-- Area bars: normalized (higher is better) -->
+      <!-- A:0%, B:64%, C:87%, D:95%, E:96%, F:96% -> x = 170+norm*160 -->
+      <rect x="170" y="52" width="0" height="14" fill="#3b82f6" rx="2"/>
+      <rect x="170" y="52" width="0" height="14" fill="#6366f1" rx="2"/>
+      <rect x="170" y="52" width="102" height="14" fill="#6366f1" rx="2"/>
+      <rect x="170" y="52" width="139" height="14" fill="#8b5cf6" rx="2"/>
+      <rect x="170" y="52" width="152" height="14" fill="#a855f7" rx="2"/>
+      <rect x="170" y="52" width="154" height="14" fill="#d946ef" rx="2"/>
+      <rect x="170" y="52" width="154" height="14" fill="#ec4899" rx="2"/>
+
+      <!-- All bars side by side per group -->
+      <!-- A (x=190): Area=0%, Buf=0%, Power=0%, CP=85%, LoL=33%, Leaf=0% -->
+      <!-- x positions: A=190, B=260, C=330, D=400, E=470, F=540 -->
+      <!-- width per bar: 14px -->
+
+      <!-- Group A bars -->
+      <rect x="190" y="52" width="0" height="14" fill="#3b82f6" rx="2" opacity="0.3"/><text x="197" y="63" fill="#3b82f6" font-size="9" text-anchor="middle">0</text>
+      <rect x="190" y="77" width="0" height="14" fill="#6366f1" rx="2" opacity="0.3"/><text x="197" y="88" fill="#6366f1" font-size="9" text-anchor="middle">0</text>
+      <rect x="190" y="102" width="48" height="14" fill="#8b5cf6" rx="2" opacity="0.3"/><text x="197" y="113" fill="#8b5cf6" font-size="9" text-anchor="middle">31</text>
+      <rect x="190" y="127" width="136" height="14" fill="#a855f7" rx="2" opacity="0.3"/><text x="197" y="138" fill="#a855f7" font-size="9" text-anchor="middle">85</text>
+      <rect x="190" y="152" width="33" height="14" fill="#d946ef" rx="2" opacity="0.3"/><text x="197" y="163" fill="#d946ef" font-size="9" text-anchor="middle">33</text>
+      <rect x="190" y="177" width="0" height="14" fill="#ec4899" rx="2" opacity="0.3"/><text x="197" y="188" fill="#ec4899" font-size="9" text-anchor="middle">0</text>
+
+      <!-- Group B bars -->
+      <rect x="248" y="52" width="102" height="14" fill="#3b82f6" rx="2" opacity="0.5"/>
+      <rect x="248" y="77" width="76" height="14" fill="#6366f1" rx="2" opacity="0.5"/>
+      <rect x="248" y="102" width="67" height="14" fill="#8b5cf6" rx="2" opacity="0.5"/>
+      <rect x="248" y="127" width="131" height="14" fill="#a855f7" rx="2" opacity="0.5"/>
+      <rect x="248" y="152" width="67" height="14" fill="#d946ef" rx="2" opacity="0.5"/>
+      <rect x="248" y="177" width="63" height="14" fill="#ec4899" rx="2" opacity="0.5"/>
+
+      <!-- Group C bars (baseline) -->
+      <rect x="306" y="52" width="139" height="14" fill="#8b5cf6" rx="2"/>
+      <rect x="306" y="77" width="105" height="14" fill="#8b5cf6" rx="2"/>
+      <rect x="306" y="102" width="79" height="14" fill="#8b5cf6" rx="2"/>
+      <rect x="306" y="127" width="123" height="14" fill="#8b5cf6" rx="2"/>
+      <rect x="306" y="152" width="67" height="14" fill="#8b5cf6" rx="2"/>
+      <rect x="306" y="177" width="100" height="14" fill="#8b5cf6" rx="2"/>
+
+      <!-- Group D bars -->
+      <rect x="364" y="52" width="152" height="14" fill="#a855f7" rx="2" opacity="0.7"/>
+      <rect x="364" y="77" width="118" height="14" fill="#a855f7" rx="2" opacity="0.7"/>
+      <rect x="364" y="102" width="85" height="14" fill="#a855f7" rx="2" opacity="0.7"/>
+      <rect x="364" y="127" width="131" height="14" fill="#a855f7" rx="2" opacity="0.7"/>
+      <rect x="364" y="152" width="67" height="14" fill="#a855f7" rx="2" opacity="0.7"/>
+      <rect x="364" y="177" width="100" height="14" fill="#a855f7" rx="2" opacity="0.7"/>
+
+      <!-- Group E bars -->
+      <rect x="422" y="52" width="154" height="14" fill="#d946ef" rx="2" opacity="0.7"/>
+      <rect x="422" y="77" width="125" height="14" fill="#d946ef" rx="2" opacity="0.7"/>
+      <rect x="422" y="102" width="85" height="14" fill="#d946ef" rx="2" opacity="0.7"/>
+      <rect x="422" y="127" width="0" height="14" fill="#d946ef" rx="2" opacity="0.7"/>
+      <rect x="422" y="152" width="0" height="14" fill="#d946ef" rx="2" opacity="0.7"/>
+      <rect x="422" y="177" width="100" height="14" fill="#d946ef" rx="2" opacity="0.7"/>
+
+      <!-- Group F bars -->
+      <rect x="480" y="52" width="154" height="14" fill="#ec4899" rx="2" opacity="0.7"/>
+      <rect x="480" y="77" width="120" height="14" fill="#ec4899" rx="2" opacity="0.7"/>
+      <rect x="480" y="102" width="96" height="14" fill="#ec4899" rx="2" opacity="0.7"/>
+      <rect x="480" y="127" width="129" height="14" fill="#ec4899" rx="2" opacity="0.7"/>
+      <rect x="480" y="152" width="67" height="14" fill="#ec4899" rx="2" opacity="0.7"/>
+      <rect x="480" y="177" width="100" height="14" fill="#ec4899" rx="2" opacity="0.7"/>
+
+      <!-- Legend -->
+      <rect x="580" y="52" width="10" height="10" fill="#3b82f6" rx="1"/><text x="595" y="61" class="legend-text">Area</text>
+      <rect x="580" y="77" width="10" height="10" fill="#6366f1" rx="1"/><text x="595" y="86" class="legend-text">Buffer</text>
+      <rect x="580" y="102" width="10" height="10" fill="#8b5cf6" rx="1"/><text x="595" y="111" class="legend-text">Power</text>
+      <rect x="580" y="127" width="10" height="10" fill="#a855f7" rx="1"/><text x="595" y="136" class="legend-text">CP</text>
+      <rect x="580" y="152" width="10" height="10" fill="#d946ef" rx="1"/><text x="595" y="161" class="legend-text">LoL</text>
+      <rect x="580" y="177" width="10" height="10" fill="#ec4899" rx="1"/><text x="595" y="186" class="legend-text">Leaf</text>
+    </svg>
+    <p style="font-size:11px;color:var(--muted);margin-top:8px">注：百分比 = (当前值-最差值)/(最优值-最差值)，越接近 100% 越好。各维度独立归一化。</p>
+  </div>
+</main>
