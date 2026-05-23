@@ -32,3 +32,34 @@ SPIMEMIO*.mr
 
 # Individual output dirs (generated)
 03_output_*/
+
+# Build cache artifacts (DC intermediate files)
+alib-52/
+*.svf
+*.pvl
+*.syn
+command.log
+filenames.log
+
+# Duplicate RTL files in root (RTL lives in 00_rtl/)
+picosoc.v
+simpleuart.v
+spiflash.v
+spimemio.v
+picorv32.v
+
+# Icebreaker/hx8k demo (not relevant to picosoc synthesis)
+hx8kdemo.*
+icebreaker.*
+ice40up5k_spram.v
+firmware.c
+start.s
+sections.lds
+*.core
+*.pcf
+spiflash_tb.v
+hx8kdemo_tb.v
+icebreaker_tb.v
+
+# Local scripts (non-project)
+run_synth.sh
