@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>D/E Evaluation Results - DC Synthesis</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',Arial,sans-serif; background:#0f1419; color:#e6edf3; padding:24px; }
+h1 { text-align:center; color:#58a6ff; font-size:1.6rem; margin-bottom:6px; }
+.subtitle { text-align:center; color:#7d8590; font-size:0.85rem; margin-bottom:28px; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }
+.card { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:18px; }
+.card h2 { font-size:1rem; color:#58a6ff; margin-bottom:14px; border-bottom:1px solid #30363d; padding-bottom:8px; }
+table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+th { color:#7d8590; text-align:left; padding:6px 10px; border-bottom:1px solid #30363d; }
+td { padding:6px 10px; border-bottom:1px solid #21262d; }
+tr:hover { background:#1c2128; }
+.highlight { color:#7ee787; font-weight:600; }
+.warning { color:#f0883e; }
+.muted { color:#7d8590; }
+.val { font-variant-numeric:tabular-nums; }
+.tag { display:inline-block; padding:1px 8px; border-radius:12px; font-size:0.72rem; }
+.tag-pass { background:#0d3317; color:#7ee787; }
+.tag-ignore { background:#2d1f0d; color:#f0883e; }
+.tag-fast { background:#0d2636; color:#58a6ff; }
+.tag-slow { background:#2d0d0d; color:#f85149; }
+.section-title { font-size:0.95rem; color:#58a6ff; margin:18px 0 10px; }
+.insight { background:#161b22; border:1px solid #30363d; border-left:3px solid #7ee787; border-radius:6px; padding:14px 18px; margin:16px 0; font-size:0.85rem; line-height:1.6; }
+.insight-orange { border-left-color:#f0883e; }
+.tag-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.legend-table td:nth-child(1) { width:90px; }
+.legend-table td:nth-child(2) { width:90px; }
+.legend-table td:nth-child(3) { width:120px; }
+.legend-table td:nth-child(4) { font-variant-numeric:tabular-nums; }
+.full { grid-column:1/-1; }
+.chart-wrap { position:relative; height:220px; }
+</style>
+</head>
+<body>
+<h1>🔬 D & E 组综合评估结果</h1>
+<div class="subtitle">picosoc @ 500MHz | Nangate45nm | DC O-2018.06-SP5 | 2026-05-23</div>
+
+<!-- ======================== SECTION D ======================== -->
+<h3 class="section-title">📐 实验 D：set_max_area 梯度约束</h3>
+<div class="grid">
+<div class="card full">
+<h2>D 组 QoR 对比（基线 A：无约束 71,985 µm²）</h2>
+<div class="tag-row">
+  <span class="tag tag-pass">✅ D1/D2/D3/D4 全部时序通过</span>
+  <span class="tag tag-ignore">⚠️ DC 忽略所有面积约束</span>
+</div>
+<table class="legend-table">
+<tr><th>Group</th><th>Area Limit</th><th>Cell Area</th><th>WNS (Setup)</th><th>WNS (Hold)</th><th>Dynamic</th><th>Compile Time</th></tr>
+<tr>
+  <td><span class="tag tag-pass">D1 基线</span></td>
+  <td class="val">无约束</td>
+  <td class="val">71,985 µm²</td>
+  <td class="val highlight">0.00 ns</td>
+  <td class="val">0.06 ns</td>
+  <td class="val">7.91 mW</td>
+  <td class="val">130.3 s</td>
+</tr>
+<tr>
+  <td><span class="tag tag-fast">D2</span></td>
+  <td class="val">60,000</td>
+  <td class="val warning">71,988 µm²</td>
+  <td class="val highlight">0.00 ns</td>
+  <td class="val">0.06 ns</td>
+  <td class="val">7.84 mW</td>
+  <td class="val">168.4 s</td>
+</tr>
+<tr>
+  <td><span class="tag tag-fast">D3</span></td>
+  <td class="val">50,000</td>
+  <td class="val warning">71,988 µm²</td>
+  <td class="val highlight">0.00 ns</td>
+  <td class="val">0.06 ns</td>
+  <td class="val">7.84 mW</td>
+  <td class="val">165.1 s</td>
+</tr>
+<tr>
+  <td><span class="tag tag-fast">D4</span></td>
+  <td class="val">40,000</td>
+  <td class="val warning">71,988 µm²</td>
+  <td class="val highlight">0.00 ns</td>
+  <td class="val">0.06 ns</td>
+  <td class="val">7.84 mW</td>
+  <td class="val">147.3 s</td>
+</tr>
+</table>
+</div>
+</div>
+
+<div class="insight">
+<strong>💡 关键发现：</strong>DC 忽略了所有面积约束（60K / 50K / 40K µm²），实际面积均为 ~71,988 µm²，与无约束基线几乎相同。
+当设计时序已经 clean 时，DC 不会主动压缩面积 —— <code>set_max_area</code> 只有在时序违例场景下才会生效，用于指导 DC 在面积和时序之间做折衷。
+本设计已达到 Nangate45nm 工艺下 picorv32 的最小逻辑面积（约 72K µm²），进一步压缩需要降频或删除逻辑。
+</div>
+
+<div class="grid">
+<div class="card">
+<h2>D 组 Compile Time 对比</h2>
+<div class="chart-wrap"><canvas id="chartD_time"></canvas></div>
+</div>
+<div class="card">
+<h2>D 组功耗对比</h2>
+<div class="chart-wrap"><canvas id="chartD_power"></canvas></div>
+</div>
+</div>
+
+<!-- ======================== SECTION E ======================== -->
+<h3 class="section-title">🔗 实验 E：set_wire_load_mode 连线负载模型</h3>
+<div class="grid">
+<div class="card full">
+<h2>E 组 QoR 对比（基线 A：库默认 5K_hvratio_1_1）</h2>
+<div class="tag-row">
+  <span class="tag tag-pass">✅ 所有模式时序均 clean</span>
+  <span class="tag tag-fast">⚡ E3 enclosed 编译最快（132.8s）</span>
+</div>
+<table class="legend-table">
+<tr><th>Group</th><th>Mode</th><th>Cell Area</th><th>WNS</th><th>WNS Hold</th><th>Dynamic</th><th>Leakage</th><th>Compile Time</th></tr>
+<tr>
+  <td><span class="tag">E1</span></td>
+  <td class="val">default (5K)</td>
+  <td class="val">71,988 µm²</td>
+  <td class="val highlight">0.00 ns</td>
+  <td class="val">0.06 ns</td>
+  <td class="val">7.84 mW</td>
+  <td class="val">1.30 mW</td>
+  <td class="val warning">167.6 s</td>
+</tr>
+<tr>
+  <td><span class="tag">E2</span></td>
+  <td class="val">top</td>
+  <td class="val">71,988 µm²</td>
+  <td class="val highlight">0.00 ns</td>
+  <td class="val">0.06 ns</td>
+  <td class="val">7.84 mW</td>
+  <td class="val">1.30 mW</td>
+  <td class="val">147.5 s</td>
+</tr>
+<tr>
+  <td><span class="tag tag-fast">E3 ⭐</span></td>
+  <td class="val">enclosed</td>
+  <td class="val">71,988 µm²</td>
+  <td class="val highlight">0.00 ns</td>
+  <td class="val">0.06 ns</td>
+  <td class="val">7.84 mW</td>
+  <td class="val">1.30 mW</td>
+  <td class="val highlight">132.8 s</td>
+</tr>
+<tr>
+  <td><span class="tag tag-fast">E4</span></td>
+  <td class="val">segmented</td>
+  <td class="val">72,056 µm²</td>
+  <td class="val highlight">0.00 ns</td>
+  <td class="val">0.06 ns</td>
+  <td class="val highlight">7.82 mW</td>
+  <td class="val">1.30 mW</td>
+  <td class="val highlight">135.0 s</td>
+</tr>
+</table>
+</div>
+</div>
+
+<div class="grid">
+<div class="card">
+<h2>E 组 Compile Time（按速度排序）</h2>
+<div class="chart-wrap"><canvas id="chartE_time"></canvas></div>
+</div>
+<div class="card">
+<h2>E 组面积 & 功耗对比</h2>
+<div class="chart-wrap"><canvas id="chartE_area_power"></canvas></div>
+</div>
+</div>
+
+<div class="insight">
+<strong>💡 关键发现：</strong>wire_load_mode 对本设计 QoR 影响极小（面积/功耗差异 &lt; 0.1%），但对编译时间影响显著。
+E3 <code>enclosed</code> 模式最快（132.8s），比 E1 default 快 21%；E4 <code>segmented</code> 功耗最低（7.82 mW）。
+本设计模块层次扁平（picorv32 核心），连线延迟占比低，wire_load_mode 优化空间有限。<strong>推荐使用 enclosed 模式</strong>，兼顾编译速度和优化质量。
+</div>
+
+<!-- ======================== SUMMARY ======================== -->
+<h3 class="section-title">📊 综合结论</h3>
+<div class="grid">
+<div class="card">
+<h2>🗺️ D 组结论（Pareto 图）</h2>
+<div class="chart-wrap"><canvas id="chartD_pareto"></canvas></div>
+</div>
+<div class="card">
+<h2>🏆 E 组推荐</h2>
+<p style="font-size:0.82rem; line-height:1.7; color:#9fa8b0;">
+  <strong style="color:#7ee787">E3 enclosed</strong> 是最优选择：<br>
+  &nbsp;&nbsp;• 编译时间最短（132.8s，比 default 快 21%）<br>
+  &nbsp;&nbsp;• 时序、面积、功耗与其他模式无差异<br>
+  &nbsp;&nbsp;• enclosed 模式符合层次化设计理念<br><br>
+  <strong style="color:#58a6ff">D 组结论：</strong><br>
+  &nbsp;&nbsp;• set_max_area 对时序 clean 的设计无效<br>
+  &nbsp;&nbsp;• 本设计最小面积 ~72K µm²（Nangate45nm）<br>
+  &nbsp;&nbsp;• 降面积需降频或删减逻辑
+</p>
+</div>
+</div>
+
+<script>
+// ─── D: Compile Time ───
+new Chart(document.getElementById('chartD_time'), {
+  type:'bar',
+  data:{
+    labels:['D1 基线\n(无约束)','D2\n60K','D3\n50K','D4\n40K'],
+    datasets:[{
+      label:'Compile Time (s)',
+      data:[130.3,168.4,165.1,147.3],
+      backgroundColor:['#1f6feb33','#58a6ff66','#58a6ff66','#58a6ff66'],
+      borderColor:['#1f6feb','#58a6ff','#58a6ff','#58a6ff'],
+      borderWidth:2, borderRadius:4
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>`${c.raw} s`}}},
+    scales:{
+      y:{grid:{color:'#30363d'}, ticks:{color:'#7d8590'}},
+      x:{grid:{display:false}, ticks:{color:'#9fa8b0', font:{size:10}}}
+    }
+  }
+});
+
+// ─── D: Power ───
+new Chart(document.getElementById('chartD_power'), {
+  type:'bar',
+  data:{
+    labels:['D1 基线','D2','D3','D4'],
+    datasets:[
+      {label:'Dynamic (mW)',data:[7.91,7.84,7.84,7.84],backgroundColor:'#f0883e55',borderColor:'#f0883e',borderWidth:2,borderRadius:4},
+      {label:'Leakage (mW)',data:[1.30,1.30,1.30,1.30],backgroundColor:'#8957e555',borderColor:'#8957e5',borderWidth:2,borderRadius:4}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#9fa8b0',font:{size:11}}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw} mW`}}},
+    scales:{
+      y:{grid:{color:'#30363d'},ticks:{color:'#7d8590'},stacked:false},
+      x:{grid:{display:false},ticks:{color:'#9fa8b0',font:{size:10}}}
+    }
+  }
+});
+
+// ─── E: Compile Time (sorted) ───
+const eLabels = ['E3\nenclosed','E4\nsegmented','E2\ntop','E1\ndefault'];
+const eTimes = [132.8,135.0,147.5,167.6];
+const eColors = ['#7ee787cc','#7ee78799','#58a6ff99','#f8514999'];
+const eBorder = ['#7ee787','#7ee787','#58a6ff','#f85149'];
+new Chart(document.getElementById('chartE_time'), {
+  type:'bar',
+  data:{labels:eLabels,datasets:[{label:'Compile Time (s)',data:eTimes,backgroundColor:eColors,borderColor:eBorder,borderWidth:2,borderRadius:4}]},
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    indexAxis:'y',
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw} s`}}},
+    scales:{
+      x:{grid:{color:'#30363d'},ticks:{color:'#7d8590'}},
+      y:{grid:{display:false},ticks:{color:'#9fa8b0',font:{size:10}}}
+    }
+  }
+});
+
+// ─── E: Area + Power ───
+new Chart(document.getElementById('chartE_area_power'), {
+  type:'bar',
+  data:{
+    labels:['E1','E2','E3','E4'],
+    datasets:[
+      {label:'Cell Area (K µm²)',data:[71.988,71.988,71.988,72.056],backgroundColor:'#1f6feb55',borderColor:'#1f6feb',borderWidth:2,borderRadius:4,yAxisID:'y'},
+      {label:'Dynamic (mW)',data:[7.837,7.837,7.837,7.821],backgroundColor:'#f0883e55',borderColor:'#f0883e',borderWidth:2,borderRadius:4,yAxisID:'y1'}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#9fa8b0',font:{size:11}}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw}`}}},
+    scales:{
+      y:{type:'linear',position:'left',grid:{color:'#30363d'},ticks:{color:'#58a6ff'},title:{display:true,text:'Area (K µm²)',color:'#58a6ff'}},
+      y1:{type:'linear',position:'right',grid:{drawOnChartArea:false},ticks:{color:'#f0883e'},title:{display:true,text:'Power (mW)',color:'#f0883e'}},
+      x:{grid:{display:false},ticks:{color:'#9fa8b0',font:{size:10}}}
+    }
+  }
+});
+
+// ─── D: Pareto (Area vs Time) ───
+new Chart(document.getElementById('chartD_pareto'), {
+  type:'scatter',
+  data:{
+    datasets:[{
+      label:'D组 (set_max_area)',
+      data:[{x:130.3,y:71.985},{x:168.4,y:71.988},{x:165.1,y:71.988},{x:147.3,y:71.988}],
+      backgroundColor:'#58a6ffcc',borderColor:'#58a6ff',borderWidth:2,pointRadius:8
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        callbacks:{
+          label:c=>`${c.raw.x}s / ${c.raw.y.toFixed(0)} µm²`
+        }
+      }
+    },
+    scales:{
+      x:{grid:{color:'#30363d'},ticks:{color:'#7d8590'},title:{display:true,text:'Compile Time (s)',color:'#7d8590'}},
+      y:{grid:{color:'#30363d'},ticks:{color:'#7d8590'},title:{display:true,text:'Cell Area (µm²)',color:'#7d8590'},min:71900,max:72100}
+    }
+  }
+});
+</script>
+</body>
+</html>
