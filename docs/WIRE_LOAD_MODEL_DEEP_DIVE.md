@@ -1,8 +1,8 @@
-# 线负载模型（WLM）深度解析
+# 线负载模型（WLM）与 `-spg` 深度解析
 
 > 日期：2026-05-23
 > 工具：DC O-2018.06-SP5
-> 工艺：Nangate45nm（用于实验），28nm/22nm/10nm+（用于理论分析）
+> 工艺：Nangate45nm（实验），28nm/22nm/10nm+（理论）
 
 ---
 
@@ -77,7 +77,7 @@ wire_load("5K_hvratio_1_1") {
 |------|------|
 | 悲观程度 | 中等（比 top 乐观，比 segmented 悲观） |
 | 适用场景 | **层次化设计**，子模块有明确物理分区 |
-| 优点 | 符合层次化 floorplan 实际情况；E3 实验验证编译最快 |
+| 优点 | 符合层次化 floorplan 实际情况；E3 实验验证编译最快（132.8s vs 167.6s） |
 | 限制 | 需要库文件正确定义各模块 WLM 属性 |
 
 ### 2.3 `segmented` — 分段估算
@@ -151,7 +151,7 @@ A内部段  ──  B内部段  ──  C内部段
 compile_ultra -spg    # Smart Physical Guidance
 ```
 
-DC 内部调用早期布局算法（类似 Pluto/Timber），估算精度提升到与 PR 阶段相当（误差 < 5%）。**16nm/14nm/10nm/7nm 节点的标准做法。**
+DC 内部调用早期布局算法，估算精度提升到与 PR 阶段相当（误差 < 5%）。**16nm/14nm/10nm/7nm 节点的标准做法。**
 
 #### 方案 B：层次化综合 + PR 校准
 
@@ -185,86 +185,176 @@ DC 综合（WLM 估算）
 
 ## 5. `-spg` 选项详解（Smart Physical Guidance）
 
-### 什么是 `-spg`
-
-`-spg` 是 DCT（DC Topographical）模式下的**Smart Physical Guidance**选项。它将物理布局信息引入综合阶段，让 DC 摆脱 WLM 的统计估算。
-
-### 为什么普通 DC 不能用 `-spg`
+### 官方原文
 
 ```
-普通 DC（DC-shell）：
-  └─ 只有逻辑信息（RTL + 库单元）
-      └─ 不知道芯片物理布局
-          └─ 只能用 WLM 统计估算连线延迟
-              └─ 误差大（尤其先进工艺）
+-spg   This option is available only in Design Compiler topographical mode.
+       Enables physical guidance, congestion optimization, and automatic layer
+       optimization. Congestion optimization reduces routing-related congestion.
+       Physical guidance enables Design Compiler Graphical to save coarse
+       placement information and pass this coarse placement information to
+       IC Compiler. With this coarse placement, IC Compiler can begin the
+       implementation flow with the place_opt command.
 
-DCT（DC Topographical）：
-  └─ 虚拟布局引擎（virtual placement）
-      └─ 读取工艺文件（.tf / .layermap）
-      └─ 读取 floorplan 约束（如果提供了）
-      └─ 估算实际连线长度和 RC 寄生参数
-          └─ 精度接近 PR 阶段
+       IC Compiler no longer needs to re-create the coarse placement by
+       running commands such as create_placement, remove_buffer_tree, or
+       psynopt. By using the Design Compiler coarse placement as a starting
+       point for placement, runtime and area correlation with IC Compiler
+       are improved.
+
+       Design Compiler Graphical automatically performs layer-aware optimization
+       when you use the -spg option, modeling parasitic variation across
+       metal layers in a way that benefits optimization. This optimization
+       helps remove excess pessimism, leading to better area and power.
+
+       In addition to the default layer-aware optimization, you can also
+       specify net constraints for layer optimization by setting specific
+       constraints using the set_net_routing_layer_constraints command or by
+       creating a net-search pattern.
+
+       In the net-search pattern approach, you define a net-search pattern
+       by using the create_net_search_pattern command and then define
+       associated minimum and maximum routing layer constraints for the
+       search pattern by using the set_net_search_pattern_delay_estimation_
+       options command. Design Compiler invokes net-pattern identification
+       after the high-fanout synthesis step in compile_ultra and assigns
+       the minimum and maximum constraints to the matching nets. The
+       subsequent optimizations consider the effects of the constraints
+       (for example, the unit resistance and capacitance values of
+       matching nets will change) during buffering and buffer removal.
+       You can define as many net-search patterns and associated layer
+       constraints as needed. In general, however, it is recommended to
+       start with very long nets (for example, 500 um) with top routing
+       layers (for example, M7 and M8). You should consider this approach
+       when your design shows significant unit resistance variation
+       (see RCEX-011 resistance values) across all available routing layers.
+
+       Note that the user-constraints and net-pattern layer optimization
+       methods might affect runtime.
 ```
 
-**普通 DC 物理信息缺失**：
-- 不知道金属层 RC 分布
-- 不知道模块实际位置和形状
-- 不知道布线资源密度
-- 没有 floorplan 约束文件
+### 官方原文翻译
 
-DCT 有虚拟布局引擎，可以模拟物理布局，因此能提供精确的连线延迟估算。
-
-### `-spg` 的核心能力
-
-```tcl
-# 普通 DC
-compile_ultra              # WLM 统计估算，误差 20-30%
-
-# DCT + spg
-compile_ultra -spg         # 虚拟布局估算，误差 < 5%
 ```
+-spg   此选项仅在 Design Compiler Topographical 模式下可用。
+       启用物理引导（physical guidance）、拥塞优化（congestion optimization）
+       和自动层级优化（automatic layer optimization）。
 
-| 能力 | 说明 |
-|------|------|
-| **连线延迟精确估算** | 根据虚拟布局的连线长度计算 RC，不用 WLM |
-| **拥塞感知优化** | DCT 能估算局部拥塞程度，指导布局优化 |
-| **时序-功耗协同优化** | 知道实际连线延迟后，更精准地做门控时钟优化 |
-| **与 ICC/ICC2 衔接** | DCT 综合结果可直接导入 ICC/ICC2，timing correlation 高 |
-| **多角落 MCMM** | 支持 Multi-Corner Multi-Mode 的综合-布局联合优化 |
+       拥塞优化可减少布线相关的拥塞问题。
 
-### `-spg` 限制
+       物理引导使 Design Compiler Graphical 能够保存粗粒度布局信息（coarse
+       placement），并将这些布局信息传递给 IC Compiler。凭借这些粗粒度布局，
+       IC Compiler 可以直接从 place_opt 命令开始实现流程。
 
-| 限制 | 说明 |
-|------|------|
-| 需要工艺文件 | 需要 `.tf` 或 `.apr` 文件定义金属层 RC |
-| 运行时长增加 | 虚拟布局计算耗时，编译时间比普通 DC 长 20-40% |
-| 不是真实布局 | 虚拟布局≠真实布局，误差仍存在，但比 WLM 小得多 |
-| 需要 license | DCT 需要额外 license（DC_Topographical） |
+       IC Compiler 不再需要通过执行 create_placement、remove_buffer_tree
+       或 psynopt 等命令来重新创建粗粒度布局。通过使用 Design Compiler
+       的粗粒度布局作为起点，IC Compiler 的运行时间和面积指标与 IC Compiler
+       的相关性都会得到改善。
 
-### 普通 DC 如何近似 `-spg` 的效果
+       当您使用 -spg 选项时，Design Compiler Graphical 会自动执行层级感知
+       优化（layer-aware optimization），对金属层间的寄生参数变化进行建模，
+       从而使优化受益。这种优化有助于消除过度的悲观估计，带来更好的面积
+       和功耗结果。
 
-如果无法使用 DCT，可以通过以下方式逼近 `-spg` 精度：
+       除了默认的层级感知优化之外，您还可以通过以下方式为层级优化指定
+       网络约束：
+         • 使用 set_net_routing_layer_constraints 命令设置特定约束
+         • 创建网络搜索模式（net-search pattern）
 
-```tcl
-# 1. 提供 wire_load 估计文件
-set_wire_load_model -library NangateOpenCellLibrary -name 5K_hvratio_1_1
+       在网络搜索模式方法中：
+         1. 使用 create_net_search_pattern 命令定义一个网络搜索模式
+         2. 使用 set_net_search_pattern_delay_estimation_options 命令
+            为该模式定义相应的最小和最大布线层级约束
 
-# 2. 手动设置连线长度估计（更精确地指导 DC）
-set_max_length 50   # 限制最大连线长度（单位：microstrip）
-set_max_capacitance 0.2  # 限制最大负载电容
+       Design Compiler 在 compile_ultra 的高扇出综合步骤之后调用网络模式
+       识别，并将这些约束分配给匹配的网络。后续的优化在缓冲插入和缓冲删除
+       过程中会考虑这些约束的影响（例如，匹配网络的单位电阻和电容值会
+       发生变化）。
 
-# 3. 明确层次化约束（让 DC 尊重模块边界）
-set_current_design $TOP
-set_wire_load_mode enclosed
-set_wire_load_model -library $LIB -name 5K_hvratio_1_1
+       可以根据需要定义任意数量的网络搜索模式和相关的层级约束。但一般来说，
+       建议从非常长的网络（例如 500 µm）和顶层布线层（例如 M7 和 M8）
+       开始。当您的设计在所有可用布线层上表现出显著的单位电阻差异时
+       （参见 RCEX-011 电阻值），应考虑此方法。
 
-# 4. 使用 critical chain 约束指导 DC 重点优化
-set_max_delay 1.5 -from [get_cells <critical_path_cells>]
+       注意：用户约束和网络模式层级优化方法可能会影响运行时间。
 ```
 
 ---
 
-## 6. 工程实践建议
+## 6. DCT 下 `-spg` vs 不加 `-spg` 的核心区别
+
+### 为什么 `-spg` 只能在 DCT 用
+
+```
+普通 DC（dc_shell）：
+  └─ 只有逻辑信息（RTL + 库单元）
+      └─ 不知道芯片物理布局
+          └─ 只能用 WLM 统计估算连线延迟
+              └─ 误差 20-30%
+
+DCT（dc_shell -topographical）：
+  └─ 虚拟布局引擎（virtual placement）
+      └─ 读取工艺文件（.tf / .layermap）
+      └─ 读取 .cel/.FRAM 物理库
+      └─ 估算实际连线长度和 RC 寄生参数
+          └─ 精度接近 PR 阶段
+```
+
+DCT 不加 `-spg` 和加 `-spg` 的差异：
+
+| 特性 | DCT 不加 `-spg` | DCT 加 `-spg` |
+|------|-----------------|--------------|
+| 物理库需求 | ✅ 需要 | ✅ 需要 |
+| 虚拟布局估算 | ✅ 有 | ✅ 有 |
+| 连线延迟精度 | 误差 5-15% | 误差 < 5% |
+| 拥塞优化 | ❌ 无 | ✅ 有 |
+| **层感知优化** | ❌ 无（所有层 RC 假设相同） | ✅ **有**（各金属层 RC 差异建模） |
+| 传递粗粒度布局给 ICC | ❌ 无 | ✅ 有（DC→ICC 零成本衔接） |
+| 与 ICC timing correlation | 85-90% | 95%+ |
+| 编译时间 | 1.2× | 1.3~1.4× |
+
+### 关键差异：layer-aware optimization
+
+**不加 `-spg`**：虚拟布局会估算连线长度，但假设**所有金属层的单位电阻/电容相同**。这导致对高层金属（低阻）的连线**过度悲观**——DC 以为长连线电阻大，插入过多 buffer。
+
+**加 `-spg`**：DC 知道每层金属的实际 RC 分布（短连线用低层 M1-M3，长连线用高层 M7-M8），在优化时对高层金属的连线更乐观，减少不必要的 buffer 插入。
+
+```
+例如：一条 800 µm 的 net
+  无 -spg：假设所有层 RC 一样 → DC 悲观地插入多个 buffer
+  有 -spg：DC 知道它会走 M7/M8（高层金属，电阻小）
+           → 少插 buffer，面积更小，功耗更低
+```
+
+这在 **10nm 以下 FinFET 工艺**中尤为关键——层间电阻差异可达 10×。
+
+---
+
+## 7. compile_ultra 完整选项速查
+
+| 选项 | 作用 | 可用模式 |
+|------|------|---------|
+| `-spg` | 物理引导 + 拥塞优化 + **层感知优化** | **仅 DCT** |
+| `-self_gating` | XOR 自门控插入（动态功耗优化） | **仅 DCT** |
+| `-check_only` | 检查设计/库是否满足 DCT 要求 | **仅 DCT** |
+| `-congestion` | 拥塞优化（已废弃，用 `-spg` 代替） | **仅 DCT** |
+| `-gate_clock` | 启用时钟门控优化（插入/删除 ICG） | 普通/DC |
+| `-no_autoungroup` | 禁用自动解组，保留所有层级 | 普通/DC |
+| `-no_boundary_optimization` | 禁止跨层级边界优化 | 普通/DC |
+| `-no_seq_output_inversion` | 禁止顺序元件输出反相 | 普通/DC |
+| `-retime` | 启用自适应 retiming 算法 | 普通/DC |
+| `-scan` | 将顺序元件替换为扫描等价单元 | 普通/DC |
+| `-exact_map` | 顺序元件严格按 HDL 描述映射 | 普通/DC |
+| `-incremental` | 增量模式，不重新映射 | 普通/DC |
+| `-top` | 只修顶层时序和 DRC | 普通/DC |
+| `-only_design_rule` | 仅修复 DRC，不做优化 | 普通/DC |
+| `-no_design_rule` | 不修复 DRC，仅优化映射 | 普通/DC |
+| `-timing_high_effort_script` | 战略时序优化（已废弃，仅兼容旧脚本） | 普通/DC |
+| `-area_high_effort_script` | 战略面积优化（已废弃，仅兼容旧脚本） | 普通/DC |
+
+---
+
+## 8. 工程实践建议
 
 ### 选型决策树
 
@@ -278,7 +368,7 @@ set_max_delay 1.5 -from [get_cells <critical_path_cells>]
   ├── 22nm~16nm → enclosed 或 DCT（推荐）
   └── 10nm 及以下 → 必须用 DCT -spg
 
-能否用 DCT？
+能否用 DCT + -spg？
   ├── 能 → compile_ultra -spg（首选）
   └── 不能 → enclosed + 手动 wire_load 校准
 ```
@@ -297,5 +387,26 @@ report_timing -max_paths 20 > timing_pr.rpt
 # 需要：
 #   1. 调整 set_wire_load_mode
 #   2. 为关键模块单独设置 wire_load_model
-#   3. 或切换到 DCT 流程
+#   3. 或切换到 DCT -spg 流程
+```
+
+### 普通 DC 如何近似 `-spg` 的效果
+
+如果无法使用 DCT，可以通过以下方式逼近 `-spg` 精度：
+
+```tcl
+# 1. 提供 wire_load 估计文件
+set_wire_load_model -library NangateOpenCellLibrary -name 5K_hvratio_1_1
+
+# 2. 手动设置连线长度约束
+set_max_length 50   # 限制最大连线长度（单位：microstrip）
+set_max_capacitance 0.2  # 限制最大负载电容
+
+# 3. 明确层次化约束（让 DC 尊重模块边界）
+set_current_design $TOP
+set_wire_load_mode enclosed
+set_wire_load_model -library $LIB -name 5K_hvratio_1_1
+
+# 4. 使用 critical chain 约束指导 DC 重点优化
+set_max_delay 1.5 -from [get_cells <critical_path_cells>]
 ```
